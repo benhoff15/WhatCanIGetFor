@@ -3,7 +3,12 @@
   "builds": [
     {
       "src": "backend/hono.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "zeroConfig": true,
+        "includeFiles": ["prisma/schema.prisma"],
+        "runtime": "nodejs18.x"
+      }
     }
   ],
   "routes": [
