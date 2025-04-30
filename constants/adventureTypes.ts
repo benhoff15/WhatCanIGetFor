@@ -1,0 +1,1 @@
+export const ADVENTURE_TYPES = ["Flight", "Hotel", "Restaurant", "Activity"];

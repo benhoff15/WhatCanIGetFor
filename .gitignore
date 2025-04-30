@@ -1,0 +1,74 @@
+# ------------------------
+# NODE / BUN / DEPENDENCIES
+# ------------------------
+node_modules/
+bun.lockb
+
+# ------------------------
+# EXPO & REACT NATIVE
+# ------------------------
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Android/iOS build output (if used later)
+android/
+ios/
+
+# ------------------------
+# DEBUGGING
+# ------------------------
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Metro cache
+.metro-health-check*
+
+# ------------------------
+# MAC & SYSTEM FILES
+# ------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------
+# CERTIFICATES / SECRETS
+# ------------------------
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# ------------------------
+# ENVIRONMENT VARIABLES
+# ------------------------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# ------------------------
+# TYPESCRIPT
+# ------------------------
+*.tsbuildinfo
+
+# ------------------------
+# PRISMA
+# ------------------------
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/
+
+# ------------------------
+# VERCEL
+# ------------------------
+.vercel
+
+# ------------------------
+# LOG FILES
+# ------------------------
+*.log
