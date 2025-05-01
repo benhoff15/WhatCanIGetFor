@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import { trpcServer } from '@hono/trpc-server';
 import { appRouter } from '../backend/trpc/app-router';
 import { createContext } from '../backend/trpc/create-context';
-import { handle } from 'hono/vercel'; // required for Vercel Edge Runtime
+import { handle } from 'hono/vercel';
 
 const app = new Hono();
 
@@ -19,6 +19,5 @@ app.use(
 
 app.get('/', (c) => c.json({ status: 'ok', message: 'API is running' }));
 
-// ✅ Edge Runtime export: GET and POST methods
 export const GET = handle(app);
 export const POST = handle(app);
