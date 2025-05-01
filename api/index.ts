@@ -19,5 +19,4 @@ app.use(
 
 app.get('/', (c) => c.json({ status: 'ok', message: 'API is running' }));
 
-export default handle(app);
-
+export const appHandler = handle(app);
