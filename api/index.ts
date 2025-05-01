@@ -3,27 +3,26 @@ import { cors } from 'hono/cors';
 import { trpcServer } from '@hono/trpc-server';
 import { appRouter } from '../backend/trpc/app-router';
 import { createContext } from '../backend/trpc/create-context';
+import { handle } from 'hono/vercel'; // ✅ <-- this is the key
 
-// Create the app
 const app = new Hono();
 
-// Allow CORS
+// Enable CORS
 app.use('*', cors());
 
-// tRPC API route
+// Setup tRPC
 app.use(
   '/trpc/*',
   trpcServer({
-    endpoint: '/api/trpc', // optional
+    endpoint: '/api/trpc',
     router: appRouter,
     createContext,
   })
 );
 
-// Health check route
-app.get('/', (c) => {
-  return c.json({ status: 'ok', message: 'API is running' });
-});
+// Health check
+app.get('/', (c) => c.json({ status: 'ok', message: 'API is running' }));
 
-// Export the Hono app — Vercel will run this as a serverless function
-export default app;
+// ✅ Export Vercel-compatible handler
+export const GET = handle(app);
+export const POST = handle(app);
