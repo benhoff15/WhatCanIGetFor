@@ -5,7 +5,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/lib/trpc";
+import trpc from "@/lib/trpc";
+import { trpcClient } from "@/lib/trpc";
 
 import { ErrorBoundary } from "./error-boundary";
 

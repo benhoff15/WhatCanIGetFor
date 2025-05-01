@@ -1,29 +1,59 @@
-import React from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
-import * as Haptics from 'expo-haptics';
-import { Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 
 import Colors from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
-import { getAdventureById } from "@/utils/mockApi";
+import type { Adventure } from "@/types/adventure";
 
 export default function AdventureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
-  
-  // Get adventure details from mock API
-  const adventure = getAdventureById(id);
-  const isSaved = savedTrips.some(trip => trip.id === id);
+
+  const [adventure, setAdventure] = useState<Adventure | null>(null);
+
+  useEffect(() => {
+    const fetchAdventure = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/db/search");
+        const json = await res.json();
+        const match = json.data.find((item: Adventure) => item.id === id);
+        setAdventure(match || null);
+      } catch (err) {
+        console.error("Failed to load adventure:", err);
+        setAdventure(null);
+      }
+    };
+
+    fetchAdventure();
+  }, [id]);
+
+  const isSaved = savedTrips.some((trip) => trip.id === id);
+
+  const handleSaveToggle = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    if (adventure) {
+      isSaved ? removeTrip(adventure.id) : addTrip(adventure);
+    }
+  };
+
+  const handleBack = () => {
+    router.back();
+  };
 
   if (!adventure) {
     return (
@@ -33,31 +63,15 @@ export default function AdventureDetailScreen() {
     );
   }
 
-  const handleSaveToggle = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    
-    if (isSaved) {
-      removeTrip(adventure.id);
-    } else {
-      addTrip(adventure);
-    }
-  };
-
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: adventure.title,
           headerShown: false,
         }}
       />
-      
+
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -67,31 +81,31 @@ export default function AdventureDetailScreen() {
             style={[styles.saveButton, isSaved && styles.savedButton]}
             onPress={handleSaveToggle}
           >
-            <Bookmark 
-              size={24} 
+            <Bookmark
+              size={24}
               color={isSaved ? Colors.primary : Colors.text}
               fill={isSaved ? Colors.primary : "transparent"}
             />
           </TouchableOpacity>
         </View>
-        
+
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
             <Text style={styles.title}>{adventure.title}</Text>
-            
+
             <View style={styles.infoRow}>
               <View style={styles.infoItem}>
                 <MapPin size={16} color={Colors.primary} />
                 <Text style={styles.infoText}>{adventure.location}</Text>
               </View>
-              
+
               {adventure.date && (
                 <View style={styles.infoItem}>
                   <Calendar size={16} color={Colors.primary} />
                   <Text style={styles.infoText}>{adventure.date}</Text>
                 </View>
               )}
-              
+
               {adventure.duration && (
                 <View style={styles.infoItem}>
                   <Clock size={16} color={Colors.primary} />
@@ -99,37 +113,32 @@ export default function AdventureDetailScreen() {
                 </View>
               )}
             </View>
-            
+
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${adventure.price}</Text>
             </View>
-            
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Description</Text>
               <Text style={styles.description}>{adventure.description}</Text>
             </View>
-            
+
             {adventure.details && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Details</Text>
-                {adventure.details.map((detail, index) => (
-                  <View key={index} style={styles.detailItem}>
-                    <View style={styles.bulletPoint} />
-                    <Text style={styles.detailText}>{detail}</Text>
-                  </View>
-                ))}
+                <Text style={styles.detailText}>{adventure.details}</Text>
               </View>
             )}
           </View>
         </ScrollView>
-        
+
         <View style={styles.footer}>
           <View>
             <Text style={styles.footerPriceLabel}>Total Price</Text>
             <Text style={styles.footerPrice}>${adventure.price}</Text>
           </View>
-          
+
           <TouchableOpacity style={styles.bookButton}>
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
@@ -229,20 +238,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: Colors.textSecondary,
   },
-  detailItem: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  bulletPoint: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-    marginTop: 8,
-    marginRight: 8,
-  },
   detailText: {
-    flex: 1,
     fontSize: 16,
     lineHeight: 24,
     color: Colors.textSecondary,

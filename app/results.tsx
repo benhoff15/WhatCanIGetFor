@@ -14,7 +14,6 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
-import { trpc } from "@/lib/trpc";
 import EmptyState from "@/components/EmptyState";
 
 export default function ResultsScreen() {
@@ -22,11 +21,40 @@ export default function ResultsScreen() {
   const { budget, adventureType, location } = useSearchStore();
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
-  const { data: results = [], isLoading } = trpc.search.getAdventures.useQuery({
-    budget,
-    adventureType,
-    location
-  });
+  type Adventure = {
+    id: string;
+    type: string;
+    title: string;
+    location: string;
+    price: number;
+    description: string;
+    date?: string | null;
+    duration?: string | null;
+    details: string;
+  };
+  
+  const [results, setResults] = React.useState<Adventure[]>([]);
+  
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  React.useEffect(() => {
+    const fetchAdventures = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch("http://localhost:3000/api/db/search");
+        const json = await res.json();
+        setResults(json.data || []);
+      } catch (err) {
+        console.error("Failed to fetch adventures:", err);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchAdventures();
+  }, []);
+  
 
   if (isLoading) {
     return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;

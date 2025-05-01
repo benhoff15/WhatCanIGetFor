@@ -1,25 +1,32 @@
 import React from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { MapPin, Calendar, Clock, Trash2, ArrowLeft } from "lucide-react-native";
-import * as Haptics from 'expo-haptics';
-import { Platform } from "react-native";
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Trash2,
+  ArrowLeft,
+} from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 
 import Colors from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
+import type { Adventure } from "@/types/adventure";
 
 export default function SavedTripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { savedTrips, removeTrip } = useSavedTripsStore();
-  
-  const trip = savedTrips.find(trip => trip.id === id);
+
+  const trip = savedTrips.find((trip) => trip.id === id) as Adventure | undefined;
 
   if (!trip) {
     router.replace("/saved");
@@ -27,7 +34,7 @@ export default function SavedTripDetailScreen() {
   }
 
   const handleDelete = () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     removeTrip(trip.id);
@@ -40,13 +47,13 @@ export default function SavedTripDetailScreen() {
 
   return (
     <>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: trip.title,
           headerShown: false,
         }}
       />
-      
+
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -59,24 +66,24 @@ export default function SavedTripDetailScreen() {
             <Trash2 size={24} color={Colors.error} />
           </TouchableOpacity>
         </View>
-        
+
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
             <Text style={styles.title}>{trip.title}</Text>
-            
+
             <View style={styles.infoRow}>
               <View style={styles.infoItem}>
                 <MapPin size={16} color={Colors.primary} />
                 <Text style={styles.infoText}>{trip.location}</Text>
               </View>
-              
+
               {trip.date && (
                 <View style={styles.infoItem}>
                   <Calendar size={16} color={Colors.primary} />
                   <Text style={styles.infoText}>{trip.date}</Text>
                 </View>
               )}
-              
+
               {trip.duration && (
                 <View style={styles.infoItem}>
                   <Clock size={16} color={Colors.primary} />
@@ -84,21 +91,21 @@ export default function SavedTripDetailScreen() {
                 </View>
               )}
             </View>
-            
+
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${trip.price}</Text>
             </View>
-            
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Description</Text>
               <Text style={styles.description}>{trip.description}</Text>
             </View>
-            
-            {trip.details && (
+
+            {trip.details && Array.isArray(trip.details) && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Details</Text>
-                {trip.details.map((detail, index) => (
+                {trip.details.map((detail: string, index: number) => (
                   <View key={index} style={styles.detailItem}>
                     <View style={styles.bulletPoint} />
                     <Text style={styles.detailText}>{detail}</Text>
@@ -108,13 +115,13 @@ export default function SavedTripDetailScreen() {
             )}
           </View>
         </ScrollView>
-        
+
         <View style={styles.footer}>
           <View>
             <Text style={styles.footerPriceLabel}>Total Price</Text>
             <Text style={styles.footerPrice}>${trip.price}</Text>
           </View>
-          
+
           <TouchableOpacity style={styles.bookButton}>
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
@@ -125,10 +132,7 @@ export default function SavedTripDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -146,12 +150,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: Colors.cardBackground,
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
+  scrollView: { flex: 1 },
+  content: { padding: 16 },
   title: {
     fontSize: 24,
     fontWeight: "700",
@@ -192,9 +192,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.text,
   },
-  section: {
-    marginBottom: 24,
-  },
+  section: { marginBottom: 24 },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",

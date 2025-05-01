@@ -5,7 +5,7 @@ export interface Adventure {
   location: string;
   price: number;
   description: string;
-  date?: string;
-  duration?: string;
-  details?: string[];
+  date?: string | null;
+  duration?: string | null;
+  details: string;
 }
