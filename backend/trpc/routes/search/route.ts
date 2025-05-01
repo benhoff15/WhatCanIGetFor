@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../../create-context";
+import { publicProcedure, createTRPCRouter } from "../../create-context";
 import { prisma } from "@/lib/prisma"; // Prisma client
 import { Adventure } from "@prisma/client"; // Optional: if you want to type responses
 
-export const searchRouter = router({
+export const searchRouter = createTRPCRouter({
   getAdventures: publicProcedure
     .input(z.object({
       budget: z.number(),

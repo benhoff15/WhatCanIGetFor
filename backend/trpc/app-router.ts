@@ -1,7 +1,7 @@
-import { router } from "./create-context"; 
+import { createTRPCRouter } from "./create-context";
 import { searchRouter } from "./routes/search/route";
 
-export const appRouter = router({
+export const appRouter = createTRPCRouter({
   search: searchRouter,
 });
 
