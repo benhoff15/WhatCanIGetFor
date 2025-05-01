@@ -1,0 +1,18 @@
+# Handle line endings
+* text=auto
+
+# Force LF for TypeScript and JS files
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.sh text eol=lf
+
+# Prevent export/import issues from OS quirks
+*.tsx diff=ts
+*.ts diff=ts
+
+# Treat lockfiles as binary to avoid merge conflicts
+package-lock.json binary
+bun.lockb binary
