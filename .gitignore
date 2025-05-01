@@ -72,3 +72,11 @@ prisma/migrations/
 # LOG FILES
 # ------------------------
 *.log
+
+# JS fallback files used only during local dev
+lib/prisma.js
+lib/prisma.d.ts
+
+# Compiled output (if you ever run `tsc`)
+dist/
+build/
