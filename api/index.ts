@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { trpcServer } from '@hono/trpc-server';
-import { appRouter } from '../backend/trpc/app-router';
-import { createContext } from '../backend/trpc/create-context';
+import { appRouter } from '../backend/trpc/app-router.js';
+import { createContext } from '../backend/trpc/create-context.js';
 import { handle } from 'hono/vercel';
 
 const app = new Hono();
@@ -19,6 +19,5 @@ app.use(
 
 app.get('/', (c) => c.json({ status: 'ok', message: 'API is running' }));
 
-// ✅ Required for Edge Function support
-export const GET = handle(app);
-export const POST = handle(app);
+// Export default handler for Edge Functions
+export default handle(app);
