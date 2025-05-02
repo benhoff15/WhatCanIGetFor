@@ -26,10 +26,9 @@ export default function AdventureDetailScreen() {
   useEffect(() => {
     const fetchAdventure = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/db/search");
+        const res = await fetch(`http://localhost:3000/api/db/adventure/${id}`);
         const json = await res.json();
-        const match = json.data.find((item: Adventure) => item.id === id);
-        setAdventure(match || null);
+        setAdventure(json.adventure || null);
       } catch (err) {
         console.error("Failed to load adventure:", err);
         setAdventure(null);

@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { hash } from 'bcryptjs';
+import { compare } from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -10,9 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const body = await new Promise<{ email: string; password: string }>((resolve, reject) => {
       let data = '';
-      req.on('data', chunk => {
-        data += chunk;
-      });
+      req.on('data', chunk => (data += chunk));
       req.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -25,32 +26,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { email, password } = body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(409).json({ error: 'User already exists.' });
+    const isPasswordValid = await compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const hashedPassword = await hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-    });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return res.status(200).json({
       success: true,
+      token,
       user: {
         id: user.id,
         email: user.email,
       },
     });
   } catch (err) {
-    console.error('Signup error:', err);
+    console.error('Login error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
