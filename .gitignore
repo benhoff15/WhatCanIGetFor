@@ -3,13 +3,16 @@
 # ------------------------
 node_modules/
 bun.lockb
+package-lock.json
+yarn.lock
 
 # ------------------------
 # EXPO & REACT NATIVE
 # ------------------------
 .expo/
-dist/
 web-build/
+dist/
+build/
 expo-env.d.ts
 
 # Android/iOS build output (if used later)
@@ -22,8 +25,7 @@ ios/
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
-# Metro cache
+*.log
 .metro-health-check*
 
 # ------------------------
@@ -62,21 +64,10 @@ Thumbs.db
 prisma/dev.db
 prisma/dev.db-journal
 prisma/migrations/
+lib/prisma.js
+lib/prisma.d.ts
 
 # ------------------------
 # VERCEL
 # ------------------------
 .vercel
-
-# ------------------------
-# LOG FILES
-# ------------------------
-*.log
-
-# JS fallback files used only during local dev
-lib/prisma.js
-lib/prisma.d.ts
-
-# Compiled output (if you ever run `tsc`)
-dist/
-build/
