@@ -8,7 +8,7 @@ import {
   ActivityIndicator
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Bookmark, MapPin } from "lucide-react-native";
+import { MapPin } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
 import Colors from "@/constants/colors";
@@ -32,40 +32,59 @@ export default function ResultsScreen() {
     duration?: string | null;
     details: string;
   };
-  
+
   const [results, setResults] = React.useState<Adventure[]>([]);
-  
   const [isLoading, setIsLoading] = React.useState(true);
-  
+
   React.useEffect(() => {
     const fetchAdventures = async () => {
       setIsLoading(true);
+
+      const trimmedPayload = {
+        budget: Number(budget),
+        adventureType: adventureType.trim().toLowerCase(),
+        location: location.trim()
+      };
+
+      console.log("📦 Search store values:", { budget, adventureType, location });
+      console.log("🔍 Sending payload:", trimmedPayload);
+
       try {
-        const res = await fetch("http://localhost:3000/api/db/search");
+        const res = await fetch("http://localhost:3000/api/db/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trimmedPayload),
+        });
+
         const json = await res.json();
+        console.log("✅ Response from server:", json);
+
         setResults(json.data || []);
       } catch (err) {
-        console.error("Failed to fetch adventures:", err);
+        console.error("❌ Failed to fetch adventures:", err);
         setResults([]);
       } finally {
         setIsLoading(false);
       }
     };
-  
+
     fetchAdventures();
   }, []);
-  
 
   if (isLoading) {
     return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
   }
 
   if (results.length === 0) {
-    return <EmptyState
-    title="No adventures found"
-    message="Try changing your budget, location, or adventure type."
-    icon="search"
-  />;
+    return (
+      <EmptyState
+        title="No adventures found"
+        message="Try changing your budget, location, or adventure type."
+        icon="search"
+      />
+    );
   }
 
   return (

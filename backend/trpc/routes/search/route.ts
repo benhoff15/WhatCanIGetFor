@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, createTRPCRouter } from "../../create-context";
-import { prisma } from "@/lib/prisma"; // Prisma client
-import { Adventure } from "@prisma/client"; // Optional: if you want to type responses
+import { prisma } from "@/lib/prisma";
 
 export const searchRouter = createTRPCRouter({
   getAdventures: publicProcedure
@@ -11,11 +10,25 @@ export const searchRouter = createTRPCRouter({
       location: z.string(),
     }))
     .query(async ({ input }) => {
+      const normalizedLocation = input.location.trim().toLowerCase();
+      const normalizedType = input.adventureType.toLowerCase();
+
+      console.log("🔍 Adventure search input:");
+      console.log({
+        budget: input.budget,
+        type: normalizedType,
+        location: normalizedLocation,
+      });
+
       const adventures = await prisma.adventure.findMany({
         where: {
-          type: input.adventureType,
+          type: {
+            equals: normalizedType,
+            mode: "insensitive",
+          },
           location: {
-            contains: input.location
+            contains: normalizedLocation,
+            mode: "insensitive",
           },
           price: {
             lte: input.budget,
@@ -23,10 +36,13 @@ export const searchRouter = createTRPCRouter({
         },
       });
 
-      // Convert comma-separated `details` string to array
-      return adventures.map((adv) => ({
+      console.log(`✅ ${adventures.length} adventure(s) found.`);
+
+      return adventures.map((adv: any) => ({
         ...adv,
-        details: adv.details.split(", ").filter(Boolean),
+        details: typeof adv.details === "string"
+          ? adv.details.split(",").map((d: string) => d.trim()).filter(Boolean)
+          : adv.details,
       }));
     }),
 });

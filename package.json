@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "scripts": {
-    "start": "expo start --tunnel",
-    "start-web": "expo start --web --tunnel",
-    "start-web-dev": "DEBUG=expo* expo start --web --tunnel"
-  },
+"scripts": {
+  "start": "cross-env EXPO_NO_TYPESCRIPT_SETUP=1 expo start --tunnel",
+  "start-lan": "cross-env EXPO_NO_TYPESCRIPT_SETUP=1 expo start --lan",
+  "start-web": "cross-env EXPO_NO_TYPESCRIPT_SETUP=1 expo start --web",
+  "start-web-dev": "cross-env EXPO_NO_TYPESCRIPT_SETUP=1 DEBUG=expo* expo start --web"
+},
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@hono/trpc-server": "^0.3.4",
@@ -53,8 +54,9 @@
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
     "@types/react": "~18.3.12",
+    "cross-env": "^7.0.3",
     "prisma": "^6.7.0",
-    "typescript": "~5.3.3",
-    "ts-node": "10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

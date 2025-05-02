@@ -4,7 +4,7 @@ import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
 import Constants from "expo-constants";
 
-const trpc = createTRPCReact<AppRouter>();
+export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
   const expoUrl = Constants?.expoConfig?.extra?.RORK_API_BASE_URL;
@@ -26,5 +26,3 @@ export const trpcClient = trpc.createClient({
     }),
   ],
 });
-
-export default trpc;
