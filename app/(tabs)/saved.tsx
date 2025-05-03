@@ -5,11 +5,12 @@ import { Trash2 } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
 
-import Colors from "@/constants/colors";
+import { useColors } from "@/constants/colors"; // ✅ Themed colors
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
 
 export default function SavedScreen() {
+  const Colors = useColors(); // ✅ Access themed palette
   const router = useRouter();
   const { savedTrips, removeTrip } = useSavedTripsStore();
 
@@ -35,23 +36,32 @@ export default function SavedScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <FlatList
         data={savedTrips}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.tripCard}
+            style={[styles.tripCard, {
+              backgroundColor: Colors.cardBackground,
+              borderColor: Colors.border,
+            }]}
             onPress={() => handleTripPress(item.id)}
           >
             <View style={styles.tripInfo}>
-              <Text style={styles.tripType}>{item.type}</Text>
-              <Text style={styles.tripTitle}>{item.title}</Text>
-              <Text style={styles.tripLocation}>
+              <Text style={[styles.tripType, { color: Colors.primary }]}>
+                {item.type}
+              </Text>
+              <Text style={[styles.tripTitle, { color: Colors.text }]}>
+                {item.title}
+              </Text>
+              <Text style={[styles.tripLocation, { color: Colors.textSecondary }]}>
                 {item.location}
               </Text>
-              <Text style={styles.tripPrice}>${item.price}</Text>
+              <Text style={[styles.tripPrice, { color: Colors.text }]}>
+                ${item.price}
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.removeButton}
@@ -69,26 +79,22 @@ export default function SavedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   listContent: {
     padding: 16,
   },
   tripCard: {
     flexDirection: "row",
-    backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   tripInfo: {
     flex: 1,
   },
   tripType: {
     fontSize: 12,
-    color: Colors.primary,
     fontWeight: "600",
     marginBottom: 4,
     textTransform: "uppercase",
@@ -96,18 +102,15 @@ const styles = StyleSheet.create({
   tripTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: Colors.text,
     marginBottom: 4,
   },
   tripLocation: {
     fontSize: 14,
-    color: Colors.textSecondary,
     marginBottom: 8,
   },
   tripPrice: {
     fontSize: 16,
     fontWeight: "700",
-    color: Colors.text,
   },
   removeButton: {
     justifyContent: "center",

@@ -4,11 +4,12 @@ import { Plane, Hotel, Utensils, Compass } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
 
-import Colors from "@/constants/colors";
+import { useColors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import { ADVENTURE_TYPES } from "@/constants/adventureTypes";
 
 export default function AdventureTypeSelector() {
+  const Colors = useColors(); // 🌓 Dynamic theme colors
   const { adventureType, setAdventureType } = useSearchStore();
 
   const handleSelect = (type: string) => {
@@ -45,7 +46,10 @@ export default function AdventureTypeSelector() {
             key={type}
             style={[
               styles.typeButton,
-              isSelected && styles.selectedTypeButton,
+              {
+                backgroundColor: isSelected ? Colors.primary : Colors.cardBackground,
+                borderColor: isSelected ? Colors.primary : Colors.border,
+              },
             ]}
             onPress={() => handleSelect(type)}
           >
@@ -53,7 +57,7 @@ export default function AdventureTypeSelector() {
             <Text
               style={[
                 styles.typeText,
-                isSelected && styles.selectedTypeText,
+                { color: isSelected ? "#fff" : Colors.text },
               ]}
             >
               {type}
@@ -76,23 +80,13 @@ const styles = StyleSheet.create({
     minWidth: "45%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selectedTypeButton: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   typeText: {
     marginTop: 8,
     fontSize: 14,
     fontWeight: "500",
-    color: Colors.text,
-  },
-  selectedTypeText: {
-    color: "#fff",
   },
 });

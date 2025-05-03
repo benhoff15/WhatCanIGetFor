@@ -17,11 +17,12 @@ import {
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
-import Colors from "@/constants/colors";
+import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import type { Adventure } from "@/types/adventure";
 
 export default function SavedTripDetailScreen() {
+  const Colors = useColors(); // 🔥 Themed colors
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { savedTrips, removeTrip } = useSavedTripsStore();
@@ -54,13 +55,16 @@ export default function SavedTripDetailScreen() {
         }}
       />
 
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: Colors.background }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={[styles.iconButton, { backgroundColor: Colors.cardBackground }]}
+          >
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.deleteButton}
+            style={[styles.iconButton, { backgroundColor: Colors.cardBackground }]}
             onPress={handleDelete}
           >
             <Trash2 size={24} color={Colors.error} />
@@ -69,46 +73,51 @@ export default function SavedTripDetailScreen() {
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
-            <Text style={styles.title}>{trip.title}</Text>
+            <Text style={[styles.title, { color: Colors.text }]}>{trip.title}</Text>
 
             <View style={styles.infoRow}>
               <View style={styles.infoItem}>
                 <MapPin size={16} color={Colors.primary} />
-                <Text style={styles.infoText}>{trip.location}</Text>
+                <Text style={[styles.infoText, { color: Colors.textSecondary }]}>{trip.location}</Text>
               </View>
 
               {trip.date && (
                 <View style={styles.infoItem}>
                   <Calendar size={16} color={Colors.primary} />
-                  <Text style={styles.infoText}>{trip.date}</Text>
+                  <Text style={[styles.infoText, { color: Colors.textSecondary }]}>{trip.date}</Text>
                 </View>
               )}
 
               {trip.duration && (
                 <View style={styles.infoItem}>
                   <Clock size={16} color={Colors.primary} />
-                  <Text style={styles.infoText}>{trip.duration}</Text>
+                  <Text style={[styles.infoText, { color: Colors.textSecondary }]}>{trip.duration}</Text>
                 </View>
               )}
             </View>
 
-            <View style={styles.priceContainer}>
-              <Text style={styles.priceLabel}>Price</Text>
-              <Text style={styles.price}>${trip.price}</Text>
+            <View style={[styles.priceContainer, {
+              backgroundColor: Colors.cardBackground,
+              borderColor: Colors.border,
+            }]}>
+              <Text style={[styles.priceLabel, { color: Colors.textSecondary }]}>Price</Text>
+              <Text style={[styles.price, { color: Colors.text }]}>${trip.price}</Text>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description</Text>
-              <Text style={styles.description}>{trip.description}</Text>
+              <Text style={[styles.sectionTitle, { color: Colors.text }]}>Description</Text>
+              <Text style={[styles.description, { color: Colors.textSecondary }]}>
+                {trip.description}
+              </Text>
             </View>
 
             {trip.details && Array.isArray(trip.details) && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Details</Text>
+                <Text style={[styles.sectionTitle, { color: Colors.text }]}>Details</Text>
                 {trip.details.map((detail: string, index: number) => (
                   <View key={index} style={styles.detailItem}>
-                    <View style={styles.bulletPoint} />
-                    <Text style={styles.detailText}>{detail}</Text>
+                    <View style={[styles.bulletPoint, { backgroundColor: Colors.primary }]} />
+                    <Text style={[styles.detailText, { color: Colors.textSecondary }]}>{detail}</Text>
                   </View>
                 ))}
               </View>
@@ -116,13 +125,18 @@ export default function SavedTripDetailScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, {
+          backgroundColor: Colors.background,
+          borderTopColor: Colors.border,
+        }]}>
           <View>
-            <Text style={styles.footerPriceLabel}>Total Price</Text>
-            <Text style={styles.footerPrice}>${trip.price}</Text>
+            <Text style={[styles.footerPriceLabel, { color: Colors.textSecondary }]}>Total Price</Text>
+            <Text style={[styles.footerPrice, { color: Colors.text }]}>${trip.price}</Text>
           </View>
 
-          <TouchableOpacity style={styles.bookButton}>
+          <TouchableOpacity
+            style={[styles.bookButton, { backgroundColor: Colors.primary }]}
+          >
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
         </View>
@@ -132,7 +146,7 @@ export default function SavedTripDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -140,22 +154,15 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
   },
-  backButton: {
+  iconButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
-  },
-  deleteButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
   },
   scrollView: { flex: 1 },
   content: { padding: 16 },
   title: {
     fontSize: 24,
     fontWeight: "700",
-    color: Colors.text,
     marginBottom: 16,
   },
   infoRow: {
@@ -171,38 +178,31 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: Colors.textSecondary,
     marginLeft: 4,
   },
   priceContainer: {
-    backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   priceLabel: {
     fontSize: 14,
-    color: Colors.textSecondary,
     marginBottom: 4,
   },
   price: {
     fontSize: 24,
     fontWeight: "700",
-    color: Colors.text,
   },
   section: { marginBottom: 24 },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: Colors.text,
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-    color: Colors.textSecondary,
   },
   detailItem: {
     flexDirection: "row",
@@ -212,7 +212,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.primary,
     marginTop: 8,
     marginRight: 8,
   },
@@ -220,7 +219,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    color: Colors.textSecondary,
   },
   footer: {
     flexDirection: "row",
@@ -228,20 +226,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
   },
   footerPriceLabel: {
     fontSize: 14,
-    color: Colors.textSecondary,
   },
   footerPrice: {
     fontSize: 20,
     fontWeight: "700",
-    color: Colors.text,
   },
   bookButton: {
-    backgroundColor: Colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,

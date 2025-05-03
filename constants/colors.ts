@@ -38,4 +38,9 @@ const DarkColors = {
   disabledLight: "#666",
 };
 
-export { LightColors, DarkColors };
+import { useTheme } from "@/providers/theme";
+
+export const useColors = () => {
+  const theme = useTheme();
+  return theme === "dark" ? DarkColors : LightColors;
+};

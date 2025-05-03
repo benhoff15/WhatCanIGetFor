@@ -14,13 +14,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MapPin, Search } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 
-import Colors from "@/constants/colors";
+import { useColors } from "@/constants/colors";  // ✅ updated import
 import { useSearchStore } from "@/store/searchStore";
 import AdventureTypeSelector from "@/components/AdventureTypeSelector";
 import LocationSelector from "@/components/LocationSelector";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const Colors = useColors();  // ✅ use themed colors
   const { budget, setBudget, adventureType, location } = useSearchStore();
   const [isFocused, setIsFocused] = useState(false);
 
@@ -35,7 +36,7 @@ export default function HomeScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: Colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView 
@@ -44,13 +45,16 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>What could I get for...</Text>
+          <Text style={[styles.title, { color: Colors.text }]}>What could I get for...</Text>
         </View>
         
-        <View style={[styles.budgetContainer, isFocused && styles.budgetContainerFocused]}>
-          <Text style={styles.currencySymbol}>$</Text>
+        <View style={[
+          styles.budgetContainer, 
+          { backgroundColor: Colors.cardBackground, borderColor: isFocused ? Colors.primary : Colors.border },
+        ]}>
+          <Text style={[styles.currencySymbol, { color: Colors.primary }]}>$</Text>
           <TextInput
-            style={styles.budgetInput}
+            style={[styles.budgetInput, { color: Colors.text }]}
             placeholder="Enter your budget"
             placeholderTextColor={Colors.textSecondary}
             keyboardType="numeric"
@@ -62,12 +66,12 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>I'm looking for</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.text }]}>I'm looking for</Text>
           <AdventureTypeSelector />
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Location</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.text }]}>Location</Text>
           <LocationSelector />
         </View>
 
@@ -94,7 +98,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
@@ -109,33 +112,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: Colors.text,
     marginBottom: 8,
   },
   budgetContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  budgetContainerFocused: {
-    borderColor: Colors.primary,
   },
   currencySymbol: {
     fontSize: 24,
     fontWeight: "600",
-    color: Colors.primary,
     marginRight: 8,
   },
   budgetInput: {
     flex: 1,
     fontSize: 24,
     fontWeight: "600",
-    color: Colors.text,
   },
   sectionContainer: {
     marginBottom: 24,
@@ -143,7 +138,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: Colors.text,
     marginBottom: 12,
   },
   searchButton: {
