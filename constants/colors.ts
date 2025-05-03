@@ -1,4 +1,6 @@
-const LightColors = {
+import { useTheme } from "@/providers/theme";
+
+export const LightColors = {
   primary: "#5D8BF4",
   secondary: "#7B9EFF",
   background: "#FFFFFF",
@@ -18,7 +20,7 @@ const LightColors = {
   disabledLight: "#CED4DA",
 };
 
-const DarkColors = {
+export const DarkColors = {
   primary: "#5D8BF4",
   secondary: "#7B9EFF",
   background: "#121212",
@@ -38,8 +40,7 @@ const DarkColors = {
   disabledLight: "#666",
 };
 
-import { useTheme } from "@/providers/theme";
-
+// Export dynamic color hook
 export const useColors = () => {
   const theme = useTheme();
   return theme === "dark" ? DarkColors : LightColors;

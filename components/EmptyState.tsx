@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Search, Bookmark } from "lucide-react-native";
 
-import { useColors } from "@/constants/colors";
+import { useColors } from "@/constants/colors"; 
 
 type EmptyStateProps = {
   title: string;
@@ -11,10 +11,10 @@ type EmptyStateProps = {
 };
 
 export default function EmptyState({ title, message, icon }: EmptyStateProps) {
-  const Colors = useColors(); // 🌓 Access theme-based colors
+  const Colors = useColors();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={[styles.iconContainer, { backgroundColor: Colors.iconBackground }]}>
         {icon === "search" ? (
           <Search size={32} color={Colors.primary} />
