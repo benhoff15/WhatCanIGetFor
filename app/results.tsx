@@ -8,10 +8,10 @@ import {
   ActivityIndicator
 } from "react-native";
 import { useRouter } from "expo-router";
-import { MapPin } from "lucide-react-native";
+import { MapPin, Bookmark } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
-import Colors from "@/constants/colors";
+import { LightColors as Colors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
@@ -92,24 +92,34 @@ export default function ResultsScreen() {
       <FlatList
         data={results}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => router.push(`/adventure/${item.id}`)}
-            onLongPress={() => {
-              const isSaved = savedTrips.some((t) => t.id === item.id);
-              isSaved ? removeTrip(item.id) : addTrip(item);
-              Haptics.selectionAsync();
-            }}
-            style={styles.item}
-          >
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.meta}>
-              <MapPin size={16} /> {item.location}
-            </Text>
-            <Text style={styles.meta}>${item.price}</Text>
-            <Text style={styles.desc}>{item.description}</Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          const isSaved = savedTrips.some((t) => t.id === item.id);
+
+          return (
+            <TouchableOpacity
+              onPress={() => router.push(`/adventure/${item.id}`)}
+              onLongPress={() => {
+                isSaved ? removeTrip(item.id) : addTrip(item);
+                Haptics.selectionAsync();
+              }}
+              style={styles.item}
+            >
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Bookmark
+                  size={20}
+                  color={isSaved ? Colors.primary : Colors.gray}
+                  fill={isSaved ? Colors.primary : "transparent"}
+                />
+              </View>
+              <Text style={styles.meta}>
+                <MapPin size={16} /> {item.location}
+              </Text>
+              <Text style={styles.meta}>${item.price}</Text>
+              <Text style={styles.desc}>{item.description}</Text>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -126,6 +136,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     backgroundColor: Colors.grayLight
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8
   },
   title: {
     fontSize: 18,

@@ -12,9 +12,10 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
-import Colors from "@/constants/colors";
+import { LightColors as Colors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import type { Adventure } from "@/types/adventure";
+import Toast from "react-native-toast-message";
 
 export default function AdventureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,9 +45,15 @@ export default function AdventureDetailScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
+  
     if (adventure) {
-      isSaved ? removeTrip(adventure.id) : addTrip(adventure);
+      if (isSaved) {
+        removeTrip(adventure.id);
+        Toast.show({ type: "info", text1: "Removed from saved" });
+      } else {
+        addTrip(adventure);
+        Toast.show({ type: "success", text1: "Saved adventure" });
+      }
     }
   };
 

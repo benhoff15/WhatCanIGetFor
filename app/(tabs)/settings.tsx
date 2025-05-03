@@ -4,24 +4,24 @@ import { ChevronRight, Moon, Bell, MapPin, HelpCircle, Info } from "lucide-react
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
 
-import Colors from "@/constants/colors";
+import { LightColors as Colors } from "@/constants/colors";
 import { useSettingsStore } from "@/store/settingsStore";
 
 export default function SettingsScreen() {
   const { 
     darkMode, 
     notifications, 
-    useCurrentLocation,
+    useLocation, // renamed from useCurrentLocation
     toggleDarkMode, 
     toggleNotifications, 
-    toggleUseCurrentLocation 
+    toggleLocation // renamed from toggleUseCurrentLocation
   } = useSettingsStore();
 
-  const handleToggle = (setting: 'darkMode' | 'notifications' | 'useCurrentLocation') => {
+  const handleToggle = (setting: 'darkMode' | 'notifications' | 'useLocation') => {
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
-    
+
     switch(setting) {
       case 'darkMode':
         toggleDarkMode();
@@ -29,8 +29,8 @@ export default function SettingsScreen() {
       case 'notifications':
         toggleNotifications();
         break;
-      case 'useCurrentLocation':
-        toggleUseCurrentLocation();
+      case 'useLocation':
+        toggleLocation();
         break;
     }
   };
@@ -39,7 +39,7 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
-        
+
         <View style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <Moon size={20} color={Colors.primary} />
@@ -52,7 +52,7 @@ export default function SettingsScreen() {
             thumbColor={Colors.switchThumb}
           />
         </View>
-        
+
         <View style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <Bell size={20} color={Colors.primary} />
@@ -65,24 +65,24 @@ export default function SettingsScreen() {
             thumbColor={Colors.switchThumb}
           />
         </View>
-        
+
         <View style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <MapPin size={20} color={Colors.primary} />
           </View>
           <Text style={styles.settingLabel}>Use Current Location</Text>
           <Switch
-            value={useCurrentLocation}
-            onValueChange={() => handleToggle('useCurrentLocation')}
+            value={useLocation}
+            onValueChange={() => handleToggle('useLocation')}
             trackColor={{ false: Colors.switchTrack, true: Colors.primary }}
             thumbColor={Colors.switchThumb}
           />
         </View>
       </View>
-      
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
-        
+
         <TouchableOpacity style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <HelpCircle size={20} color={Colors.primary} />
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
           <Text style={styles.settingLabel}>Help & Support</Text>
           <ChevronRight size={20} color={Colors.textSecondary} />
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <Info size={20} color={Colors.primary} />
@@ -99,7 +99,7 @@ export default function SettingsScreen() {
           <ChevronRight size={20} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </View>
