@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Alert, TouchableOpacity, Text } from "react-nat
 import { useRouter } from "expo-router";
 import AuthForm from "@/components/AuthForm";
 import { useColors } from "@/constants/colors";
+import * as SecureStore from "expo-secure-store";
 
 type AuthData = {
   email: string;
@@ -10,14 +11,33 @@ type AuthData = {
 };
 
 export default function LoginScreen() {
-  const Colors = useColors();
   const router = useRouter();
+  const Colors = useColors();
 
-  const handleLogin = ({ email, password }: AuthData) => {
-    // TODO: Validate and log in via backend
-    Alert.alert("Login Success", `Welcome back, ${email}!`);
-    router.replace("/");
-  };
+const handleLogin = async ({ email, password }: AuthData) => {
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      Alert.alert("Login failed", data.error || "Unknown error");
+      return;
+    }
+
+    // ✅ Save JWT token securely
+    await SecureStore.setItemAsync("authToken", data.token);
+    Alert.alert("Login Success", `Welcome back, ${email}`);
+    router.replace("/"); // or navigate to a protected screen
+
+  } catch (error) {
+    Alert.alert("Network error", "Something went wrong");
+  }
+};
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: Colors.background }]}>
