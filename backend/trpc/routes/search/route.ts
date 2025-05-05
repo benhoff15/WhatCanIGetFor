@@ -22,12 +22,12 @@ export const searchRouter = createTRPCRouter({
 
       const adventures = await prisma.adventure.findMany({
         where: {
-          type: {
-            equals: normalizedType,
+          location: {
+            contains: input.location.trim(),
             mode: "insensitive",
           },
-          location: {
-            contains: normalizedLocation,
+          type: {
+            equals: input.adventureType.trim(),
             mode: "insensitive",
           },
           price: {

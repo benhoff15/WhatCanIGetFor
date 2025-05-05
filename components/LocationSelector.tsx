@@ -21,7 +21,7 @@ import { POPULAR_LOCATIONS } from "@/constants/locations";
 export default function LocationSelector() {
   const Colors = useColors();
   const { location, setLocation } = useSearchStore();
-  const { useCurrentLocation } = useSettingsStore();
+  const { useLocation } = useSettingsStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -140,7 +140,7 @@ export default function LocationSelector() {
               />
             </View>
 
-            {useCurrentLocation && (
+            {useLocation && (
               <TouchableOpacity
                 style={styles(Colors).currentLocationButton}
                 onPress={handleUseCurrentLocation}

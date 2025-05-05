@@ -17,25 +17,32 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-native",
+    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
-    "app/**/*",
-    "api/**/*",
-    "backend/**/*",
-    "lib/**/*",
-    "store/**/*",
-    "types/**/*",
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "api/**/*",
+    "app/**/*",
+    "backend/**/*",
+    "expo-env.d.ts",
+    "lib/**/*",
+    "store/**/*",
+    "types/**/*",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -43,4 +50,5 @@
     "dist",
     "build"
   ],
+  "extends": "expo/tsconfig.base"
 }

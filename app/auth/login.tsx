@@ -3,41 +3,41 @@ import { ScrollView, StyleSheet, Alert, TouchableOpacity, Text } from "react-nat
 import { useRouter } from "expo-router";
 import AuthForm from "@/components/AuthForm";
 import { useColors } from "@/constants/colors";
-import * as SecureStore from "expo-secure-store";
+import { saveToken } from "@/utils/secureStore";
 
 type AuthData = {
   email: string;
   password: string;
 };
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+
 export default function LoginScreen() {
   const router = useRouter();
   const Colors = useColors();
 
-const handleLogin = async ({ email, password }: AuthData) => {
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  const handleLogin = async ({ email, password }: AuthData) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      Alert.alert("Login failed", data.error || "Unknown error");
-      return;
+      if (!res.ok) {
+        Alert.alert("Login failed", data.error || "Unknown error");
+        return;
+      }
+
+      await saveToken("authToken", data.token);
+      Alert.alert("Login Success", `Welcome back, ${email}`);
+      router.replace("/"); // Redirect to home or dashboard
+    } catch (error) {
+      Alert.alert("Network error", "Something went wrong");
     }
-
-    // ✅ Save JWT token securely
-    await SecureStore.setItemAsync("authToken", data.token);
-    Alert.alert("Login Success", `Welcome back, ${email}`);
-    router.replace("/"); // or navigate to a protected screen
-
-  } catch (error) {
-    Alert.alert("Network error", "Something went wrong");
-  }
-};
+  };
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: Colors.background }]}>
