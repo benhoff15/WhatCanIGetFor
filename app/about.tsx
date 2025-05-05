@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useColors } from "@/constants/colors";
 import { useNavigation } from "expo-router";
 import { useEffect } from "react";
+import Logo from "@/components/Logo";
 
 export default function AboutScreen() {
   const Colors = useColors();
@@ -21,9 +22,14 @@ export default function AboutScreen() {
       style={[styles.container, { backgroundColor: Colors.background }]}
       contentContainerStyle={styles.content}
     >
-      <Text style={[styles.title, { color: Colors.text }]}>
-        WhatCanIGetFor
-      </Text>
+      <View style={styles.logoWrapper}>
+        <Logo size={64} />
+        <Text style={[styles.tagline, { color: Colors.textSecondary }]}>
+          Built for discovery
+          </Text>
+        </View>
+
+        <Text style={[styles.title, { color: Colors.text }]}>WhatCanIGetFor</Text>
 
       <Text style={[styles.text, { color: Colors.textSecondary }]}>
         WhatCanIGetFor is your curated adventure finder. Whether you're
@@ -88,6 +94,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 24,
     marginBottom: 8,
+  },
+  logoWrapper: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  
+  tagline: {
+    fontSize: 14,
+    marginTop: 4,
   },
   text: {
     fontSize: 16,

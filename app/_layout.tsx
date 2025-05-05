@@ -7,6 +7,7 @@ import { Platform } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ThemeProvider } from "@/providers/theme";
+import { AuthProvider } from "@/providers/auth";
 
 import { ErrorBoundary } from "./error-boundary";
 
@@ -47,9 +48,11 @@ export default function RootLayout() {
     <ErrorBoundary>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider> {/* Add this */}
-            <RootLayoutNav />
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <RootLayoutNav />
+            </ThemeProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </trpc.Provider>
     </ErrorBoundary>

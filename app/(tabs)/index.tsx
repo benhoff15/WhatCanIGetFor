@@ -18,6 +18,7 @@ import { useColors } from "@/constants/colors";  // ✅ updated import
 import { useSearchStore } from "@/store/searchStore";
 import AdventureTypeSelector from "@/components/AdventureTypeSelector";
 import LocationSelector from "@/components/LocationSelector";
+import Logo from "@/components/Logo";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -45,6 +46,17 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
+        <Logo size={56} />
+        <Text
+            style={{
+              fontSize: 14,
+              color: Colors.textSecondary, 
+              textAlign: "center",
+              marginTop: 4,
+              marginBottom: 4,
+        }}>
+            Discover curated adventures that fit your budget
+          </Text>
           <Text style={[styles.title, { color: Colors.text }]}>What could I get for...</Text>
         </View>
         
@@ -107,7 +119,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 16,
+    alignItems: "center",
+    marginTop: -8,
   },
   title: {
     fontSize: 28,

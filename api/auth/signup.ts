@@ -1,56 +1,26 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { hash } from 'bcryptjs';
-import { prisma } from '../../lib/prisma.js';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
+const prisma = new PrismaClient();
 
-    const body = await new Promise<{ email: string; password: string }>((resolve, reject) => {
-      let data = '';
-      req.on('data', chunk => {
-        data += chunk;
-      });
-      req.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(new Error('Invalid JSON'));
-        }
-      });
-      req.on('error', reject);
-    });
+export async function POST(req: NextRequest) {
+  const { email, password } = await req.json();
 
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
-
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(409).json({ error: 'User already exists.' });
-    }
-
-    const hashedPassword = await hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    return res.status(200).json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-      },
-    });
-  } catch (err) {
-    console.error('Signup error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+  if (!email || !password) {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return NextResponse.json({ error: "User already exists" }, { status: 409 });
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+
+  const user = await prisma.user.create({
+    data: { email, password: hashed },
+  });
+  console.log("New user:", user);
+  return NextResponse.json({ message: "User created", userId: user.id });
 }

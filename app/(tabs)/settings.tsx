@@ -17,10 +17,12 @@ import {
   Info,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router"; // ✅ import router
+import { useRouter } from "expo-router";
+import Logo from "@/components/Logo";
 
 import { LightColors, DarkColors } from "@/constants/colors";
 import { useSettingsStore } from "@/store/settingsStore";
+
 
 export default function SettingsScreen() {
   const router = useRouter(); // ✅ initialize router
@@ -100,6 +102,11 @@ export default function SettingsScreen() {
       alignItems: "center",
       padding: 24,
     },
+    logoWrapper: {
+      alignItems: "center",
+      marginTop: 16,
+      marginBottom: 8,
+    },
     versionText: {
       fontSize: 14,
       color: Colors.textSecondary,
@@ -108,6 +115,9 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.logoWrapper}>
+      <Logo size={64} />
+      </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
 
