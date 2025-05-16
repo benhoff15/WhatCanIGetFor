@@ -5,7 +5,7 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MapPin, Bookmark } from "lucide-react-native";
@@ -15,145 +15,129 @@ import { LightColors as Colors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
+import { trpc } from "@/lib/trpc";
+
+type Adventure = {
+  id: string;
+  type: string;
+  title: string;
+  location: string;
+  price: number;
+  description: string;
+  date?: string | null;
+  duration?: string | null;
+  details: string[]; // ensure it's an array after parsing
+};
 
 export default function ResultsScreen() {
   const router = useRouter();
   const { budget, adventureType, location } = useSearchStore();
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
-  type Adventure = {
-    id: string;
-    type: string;
-    title: string;
-    location: string;
-    price: number;
-    description: string;
-    date?: string | null;
-    duration?: string | null;
-    details: string;
+  const trimmedPayload = {
+    budget: Number(budget),
+    adventureType: adventureType.trim().toLowerCase(),
+    location: location.trim(),
   };
 
-  const [results, setResults] = React.useState<Adventure[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { data, isLoading, error } = trpc.search.getAdventures.useQuery(trimmedPayload);
 
-  React.useEffect(() => {
-    const fetchAdventures = async () => {
-      setIsLoading(true);
-
-      const trimmedPayload = {
-        budget: Number(budget),
-        adventureType: adventureType.trim().toLowerCase(),
-        location: location.trim()
-      };
-
-      console.log("📦 Search store values:", { budget, adventureType, location });
-      console.log("🔍 Sending payload:", trimmedPayload);
-
-      try {
-        const res = await fetch("http://localhost:3000/api/db/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(trimmedPayload),
-        });
-
-        const json = await res.json();
-        console.log("✅ Response from server:", json);
-
-        setResults(json.data || []);
-      } catch (err) {
-        console.error("❌ Failed to fetch adventures:", err);
-        setResults([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAdventures();
-  }, []);
+  const toggleSave = (adventure: Adventure) => {
+    const alreadySaved = savedTrips.some((trip) => trip.id === adventure.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (alreadySaved) {
+      removeTrip(adventure.id);
+    } else {
+      addTrip(adventure);
+    }
+  };
 
   if (isLoading) {
-    return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
-  if (results.length === 0) {
+  if (error || !data || data.length === 0) {
     return (
       <EmptyState
         title="No adventures found"
-        message="Try changing your budget, location, or adventure type."
         icon="search"
+        message="Try changing your budget, location, or adventure type."
       />
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const isSaved = savedTrips.some((t) => t.id === item.id);
-
-          return (
-            <TouchableOpacity
-              onPress={() => router.push(`/adventure/${item.id}`)}
-              onLongPress={() => {
-                isSaved ? removeTrip(item.id) : addTrip(item);
-                Haptics.selectionAsync();
-              }}
-              style={styles.item}
-            >
-              <View style={styles.headerRow}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Bookmark
-                  size={20}
-                  color={isSaved ? Colors.primary : Colors.gray}
-                  fill={isSaved ? Colors.primary : "transparent"}
-                />
-              </View>
-              <Text style={styles.meta}>
-                <MapPin size={16} /> {item.location}
-              </Text>
-              <Text style={styles.meta}>${item.price}</Text>
-              <Text style={styles.desc}>{item.description}</Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+    <FlatList
+      data={data}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={{ padding: 16 }}
+      renderItem={({ item }) => {
+        const isSaved = savedTrips.some((trip) => trip.id === item.id);
+        return (
+          <TouchableOpacity
+            onPress={() => router.push(`/adventure/${item.id}`)}
+            onLongPress={() => toggleSave(item)}
+            style={styles.card}
+          >
+            <Text style={styles.title}>{item.title}</Text>
+            <View style={styles.meta}>
+              <MapPin size={16} color={Colors.gray} />
+              <Text style={styles.metaText}>{item.location}</Text>
+              <Text style={styles.metaText}>${item.price}</Text>
+            </View>
+            <View style={styles.bookmark}>
+              <Bookmark
+                size={20}
+                color={isSaved ? Colors.primary : Colors.gray}
+                fill={isSaved ? Colors.primary : "none"}
+              />
+            </View>
+          </TouchableOpacity>
+        );
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  centered: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#fff"
+    justifyContent: "center",
+    alignItems: "center",
   },
-  item: {
-    marginBottom: 20,
+  card: {
+    backgroundColor: Colors.cardBackground,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: Colors.grayLight
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 3,
+    position: "relative",
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold"
+    fontWeight: "600",
+    marginBottom: 8,
+    color: Colors.text,
   },
   meta: {
-    fontSize: 14,
-    marginTop: 4
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  desc: {
-    marginTop: 8,
-    fontSize: 13,
-    color: Colors.gray
-  }
+  metaText: {
+    color: Colors.textSecondary,
+  },
+  bookmark: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+  },
 });

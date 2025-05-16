@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as Linking from "expo-linking";
 import {
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
 
 import { LightColors as Colors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
@@ -24,11 +26,17 @@ export default function AdventureDetailScreen() {
 
   const [adventure, setAdventure] = useState<Adventure | null>(null);
 
+  const baseUrl =
+    Constants?.expoConfig?.extra?.RORK_API_BASE_URL ||
+    process.env.EXPO_PUBLIC_RORK_API_BASE_URL ||
+    "http://localhost:8080";
+
   useEffect(() => {
     const fetchAdventure = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/db/adventure/${id}`);
+        const res = await fetch(`${baseUrl}/adventure/${id}`); // ✅ Updated
         const json = await res.json();
+        console.log("Loaded adventure:", json.adventure);
         setAdventure(json.adventure || null);
       } catch (err) {
         console.error("Failed to load adventure:", err);
@@ -45,7 +53,7 @@ export default function AdventureDetailScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-  
+
     if (adventure) {
       if (isSaved) {
         removeTrip(adventure.id);
@@ -68,6 +76,21 @@ export default function AdventureDetailScreen() {
       </View>
     );
   }
+
+const handleBookNow = () => {
+  if (Platform.OS !== "web") {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+
+  if (adventure?.bookingUrl) {
+    Linking.openURL(adventure.bookingUrl);
+  } else {
+    Toast.show({
+      type: "info",
+      text1: "No booking link available",
+    });
+  }
+};
 
   return (
     <>
@@ -133,7 +156,11 @@ export default function AdventureDetailScreen() {
             {adventure.details && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Details</Text>
-                <Text style={styles.detailText}>{adventure.details}</Text>
+                <Text style={styles.detailText}>
+                  {Array.isArray(adventure.details)
+                    ? adventure.details.join(", ")
+                    : adventure.details}
+                </Text>
               </View>
             )}
           </View>
@@ -145,7 +172,7 @@ export default function AdventureDetailScreen() {
             <Text style={styles.footerPrice}>${adventure.price}</Text>
           </View>
 
-          <TouchableOpacity style={styles.bookButton}>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
         </View>

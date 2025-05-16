@@ -3,6 +3,7 @@ import { httpLink } from "@trpc/client";
 import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
 import Constants from "expo-constants";
+import { getToken } from "@/utils/secureStore";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -15,14 +16,24 @@ const getBaseUrl = () => {
 
   if (typeof window !== "undefined") return "";
 
-  throw new Error("No base url found. Set RORK_API_BASE_URL in app.json extra.");
+  return "http://localhost:8080";
 };
 
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
-      url: `${getBaseUrl()}/api/trpc`,
+      url: `${getBaseUrl()}/trpc`,
       transformer: superjson,
+      fetch: async (input, init) => {
+        const token = await getToken("authToken");
+        return fetch(input, {
+          ...init,
+          headers: {
+            ...init?.headers,
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        });
+      },
     }),
   ],
 });

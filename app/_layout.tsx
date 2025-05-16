@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ThemeProvider } from "@/providers/theme";
 import { AuthProvider } from "@/providers/auth";
+import Toast from "react-native-toast-message"; 
 
 import { ErrorBoundary } from "./error-boundary";
 
@@ -44,19 +45,22 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
-    <ErrorBoundary>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ThemeProvider>
+return (
+  <ErrorBoundary>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <>
               <RootLayoutNav />
-            </ThemeProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
-    </ErrorBoundary>
-  );
+              <Toast />
+            </>
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
+  </ErrorBoundary>
+);
 }
 
 function RootLayoutNav() {

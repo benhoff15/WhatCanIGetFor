@@ -17,6 +17,7 @@ model Adventure {
   date        String?
   duration    String?
   details     String
+  bookingUrl  String?
 }
 
 model User {
