@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 import { useColors } from "@/constants/colors"; // ✅ Themed colors
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
+import Toast from "react-native-toast-message";
 
 export default function SavedScreen() {
   const Colors = useColors(); // ✅ Access themed palette
@@ -19,6 +20,10 @@ export default function SavedScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     removeTrip(id);
+    Toast.show({
+      type: "info",
+      text1: "Removed from saved",
+    });
   };
 
   const handleTripPress = (id: string) => {

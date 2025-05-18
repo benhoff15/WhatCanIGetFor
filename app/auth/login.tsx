@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import AuthForm from "@/components/AuthForm";
 import { useColors } from "@/constants/colors";
 import { saveToken } from "@/utils/secureStore";
+import Toast from "react-native-toast-message";
 
 type AuthData = {
   email: string;
@@ -28,15 +29,27 @@ export default function LoginScreen() {
       const data = await res.json();
 
       if (!res.ok) {
-        Alert.alert("Login failed", data.error || "Unknown error");
+        Toast.show({
+          type: "error",
+          text1: "Login failed",
+          text2: data.error || "Invalid credentials",
+        });
         return;
       }
 
       await saveToken("authToken", data.token);
-      Alert.alert("Login Success", `Welcome back, ${email}`);
+      Toast.show({
+        type: "success",
+        text1: "Login successful",
+        text2: `Welcome back, ${email}`,
+      });
       router.replace("/"); // Redirect to home or dashboard
     } catch (error) {
-      Alert.alert("Network error", "Something went wrong");
+      Toast.show({
+        type: "error",
+        text1: "Network error",
+        text2: "Please check your connection and try again.",
+      });
     }
   };
 

@@ -21,6 +21,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import Logo from "@/components/Logo";
+import Toast from "react-native-toast-message";
 
 import { LightColors, DarkColors } from "@/constants/colors";
 import { useSettingsStore } from "@/store/settingsStore";
@@ -48,7 +49,11 @@ export default function SettingsScreen() {
   }, [isLoading, user]);
 
   const handleLogout = async () => {
-  await deleteToken("authToken");
+    await deleteToken("authToken");
+     Toast.show({
+      type: "success",
+      text1: "Logged out successfully",
+    });
   router.replace("/auth/login");
 };
 
