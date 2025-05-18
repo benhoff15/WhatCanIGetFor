@@ -130,7 +130,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.logoWrapper}>
-        <Logo size={64} />
+        <Logo size={84} />
         {!isLoading && user?.email && (
           <Text
             style={{

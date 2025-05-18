@@ -11,11 +11,14 @@ import { useRouter } from "expo-router";
 import { MapPin, Bookmark } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 
-import { LightColors as Colors } from "@/constants/colors";
+import { useColors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
 import { trpc } from "@/lib/trpc";
+import { useNavigation } from "expo-router";
+import { useEffect } from "react";
+
 
 type Adventure = {
   id: string;
@@ -26,11 +29,21 @@ type Adventure = {
   description: string;
   date?: string | null;
   duration?: string | null;
-  details: string[]; // ensure it's an array after parsing
+  details: string[];
 };
 
 export default function ResultsScreen() {
   const router = useRouter();
+  const Colors = useColors();
+  const navigation = useNavigation();
+
+useEffect(() => {
+  navigation.setOptions({
+    headerStyle: { backgroundColor: Colors.background },
+    headerTintColor: Colors.text,
+    headerShadowVisible: true,
+  });
+}, [navigation, Colors]);
   const { budget, adventureType, location } = useSearchStore();
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
@@ -52,6 +65,45 @@ export default function ResultsScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    centered: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    card: {
+      backgroundColor: Colors.cardBackground,
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 12,
+      shadowColor: "#000",
+      shadowOpacity: 0.1,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 8,
+      elevation: 3,
+      position: "relative",
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "600",
+      marginBottom: 8,
+      color: Colors.text,
+    },
+    meta: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    metaText: {
+      color: Colors.textSecondary,
+    },
+    bookmark: {
+      position: "absolute",
+      top: 16,
+      right: 16,
+    },
+  });
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -70,7 +122,9 @@ export default function ResultsScreen() {
     );
   }
 
-  return (
+return (
+  <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={{ height: 1, backgroundColor: Colors.border }} />
     <FlatList
       data={data}
       keyExtractor={(item) => item.id}
@@ -100,44 +154,6 @@ export default function ResultsScreen() {
         );
       }}
     />
-  );
+  </View>
+);
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    backgroundColor: Colors.cardBackground,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 3,
-    position: "relative",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: Colors.text,
-  },
-  meta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  metaText: {
-    color: Colors.textSecondary,
-  },
-  bookmark: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-  },
-});

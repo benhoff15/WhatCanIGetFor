@@ -1,15 +1,13 @@
-import React, { createContext, useContext, useMemo } from "react";
-import { Appearance } from "react-native";
+import React, { createContext, useContext } from "react";
 import { useSettingsStore } from "@/store/settingsStore";
 
 const ThemeContext = createContext<"light" | "dark">("light");
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const { darkMode } = useSettingsStore();
-  const colorScheme = useMemo(() => (darkMode ? "dark" : "light"), [darkMode]);
+  const darkMode = useSettingsStore((state) => state.darkMode);
 
   return (
-    <ThemeContext.Provider value={colorScheme}>
+    <ThemeContext.Provider value={darkMode ? "dark" : "light"}>
       {children}
     </ThemeContext.Provider>
   );

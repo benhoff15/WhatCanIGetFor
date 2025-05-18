@@ -43,5 +43,6 @@ export const DarkColors = {
 // Export dynamic color hook
 export const useColors = () => {
   const theme = useTheme();
+  console.log("🎨 useColors -> theme:", theme);
   return theme === "dark" ? DarkColors : LightColors;
 };

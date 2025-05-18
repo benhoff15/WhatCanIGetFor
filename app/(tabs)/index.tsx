@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { MapPin, Search } from "lucide-react-native";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 
-import { useColors } from "@/constants/colors";  // ✅ updated import
+import { useColors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
 import AdventureTypeSelector from "@/components/AdventureTypeSelector";
 import LocationSelector from "@/components/LocationSelector";
@@ -22,12 +22,12 @@ import Logo from "@/components/Logo";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const Colors = useColors();  // ✅ use themed colors
+  const Colors = useColors();
   const { budget, setBudget, adventureType, location } = useSearchStore();
   const [isFocused, setIsFocused] = useState(false);
 
   const handleSearch = () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     router.push("/results");
@@ -36,34 +36,57 @@ export default function HomeScreen() {
   const isSearchEnabled = budget > 0 && adventureType && location;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: Colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-        <Logo size={56} />
-        <Text
-            style={{
-              fontSize: 14,
-              color: Colors.textSecondary, 
-              textAlign: "center",
-              marginTop: 4,
-              marginBottom: 4,
-        }}>
-            Discover curated adventures that fit your budget
-          </Text>
-          <Text style={[styles.title, { color: Colors.text }]}>What could I get for...</Text>
+        <View style={styles.logoWrapper}>
+          <Logo size={84} />
         </View>
-        
-        <View style={[
-          styles.budgetContainer, 
-          { backgroundColor: Colors.cardBackground, borderColor: isFocused ? Colors.primary : Colors.border },
-        ]}>
+
+        <Text
+          style={{
+            maxWidth: 280,
+            fontSize: 14,
+            color: Colors.textSecondary,
+            textAlign: "center",
+            lineHeight: 20,
+            marginTop: 4,
+            marginBottom: 4,
+            alignSelf: "center",
+          }}
+        >
+          Discover curated adventures that fit your budget
+        </Text>
+
+        <Text style={[styles.title, { color: Colors.text }]}>
+          What could I get for...
+        </Text>
+
+        <View
+          style={{
+            height: 1,
+            backgroundColor: Colors.border,
+            marginBottom: 20,
+            width: "80%",
+            alignSelf: "center",
+          }}
+        />
+
+        <View
+          style={[
+            styles.budgetContainer,
+            {
+              backgroundColor: Colors.cardBackground,
+              borderColor: isFocused ? Colors.primary : Colors.border,
+            },
+          ]}
+        >
           <Text style={[styles.currencySymbol, { color: Colors.primary }]}>$</Text>
           <TextInput
             style={[styles.budgetInput, { color: Colors.text }]}
@@ -93,7 +116,11 @@ export default function HomeScreen() {
           disabled={!isSearchEnabled}
         >
           <LinearGradient
-            colors={isSearchEnabled ? [Colors.primary, Colors.secondary] : [Colors.disabledLight, Colors.disabled]}
+            colors={
+              isSearchEnabled
+                ? [Colors.primary, Colors.secondary]
+                : [Colors.disabledLight, Colors.disabled]
+            }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.gradient}
@@ -115,31 +142,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingTop: 4,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
-  header: {
-    marginBottom: 16,
+  logoWrapper: {
     alignItems: "center",
-    marginTop: -8,
+    marginTop: 16,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 0,
+    marginBottom: 16,
   },
   budgetContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 20,
     borderWidth: 1,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   currencySymbol: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "600",
-    marginRight: 8,
+    marginRight: 6,
+    alignSelf: "flex-end",
+    marginBottom: 2,
   },
   budgetInput: {
     flex: 1,
@@ -147,17 +185,22 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "600",
     marginBottom: 12,
   },
   searchButton: {
     borderRadius: 12,
     overflow: "hidden",
-    marginTop: 12,
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   searchButtonDisabled: {
     opacity: 0.7,
@@ -166,7 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
   },
   searchButtonText: {
     color: "#fff",

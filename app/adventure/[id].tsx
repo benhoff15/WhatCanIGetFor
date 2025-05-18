@@ -14,14 +14,19 @@ import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-nativ
 import * as Haptics from "expo-haptics";
 import Constants from "expo-constants";
 
-import { LightColors as Colors } from "@/constants/colors";
+import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import type { Adventure } from "@/types/adventure";
 import Toast from "react-native-toast-message";
+import { useNavigation } from "expo-router";
 
 export default function AdventureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const Colors = useColors();
+  const styles = createStyles(Colors);
+  const navigation = useNavigation();
+  
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
   const [adventure, setAdventure] = useState<Adventure | null>(null);
@@ -97,7 +102,9 @@ const handleBookNow = () => {
       <Stack.Screen
         options={{
           title: adventure.title,
-          headerShown: false,
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+          headerShadowVisible: false,
         }}
       />
 
@@ -117,6 +124,8 @@ const handleBookNow = () => {
             />
           </TouchableOpacity>
         </View>
+
+        <View style={{ height: 1, backgroundColor: Colors.border, width: "100%" }} />
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
@@ -181,7 +190,8 @@ const handleBookNow = () => {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
