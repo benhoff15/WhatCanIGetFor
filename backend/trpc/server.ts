@@ -1,10 +1,13 @@
+import "dotenv/config";
 import { Hono } from "hono";
-import { serve } from "@hono/node-server"; //  Required for Node
+import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "./app-router";
 import { createContext } from "./create-context";
 import { prisma } from "@/lib/prisma";
+import { signupRoute } from "./routes/auth/signup";
+import { loginRoute } from "./routes/auth/login";
 
 const app = new Hono();
 
@@ -44,7 +47,10 @@ app.get("/adventure/:id", async (c) => {
   }
 });
 
-//  Start the server using Hono's Node adapter
+
+app.route("/api/auth/signup", signupRoute);
+app.route("/api/auth/login", loginRoute);
+
 serve({
   fetch: app.fetch,
   port: 8080,

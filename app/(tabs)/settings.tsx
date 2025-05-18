@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { trpc } from "@/lib/trpc";
+import { getToken, deleteToken } from "@/utils/secureStore";
 import {
   StyleSheet,
   Text,
@@ -37,6 +39,18 @@ export default function SettingsScreen() {
   } = useSettingsStore();
 
   const Colors = darkMode ? DarkColors : LightColors;
+  const { data: user, isLoading } = trpc.user.me.useQuery();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/auth/login");
+    }
+  }, [isLoading, user]);
+
+  const handleLogout = async () => {
+  await deleteToken("authToken");
+  router.replace("/auth/login");
+};
 
   const handleToggle = (
     setting: "darkMode" | "notifications" | "useLocation"
@@ -116,10 +130,52 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.logoWrapper}>
-      <Logo size={64} />
+        <Logo size={64} />
+        {!isLoading && user?.email && (
+          <Text
+            style={{
+              textAlign: "center",
+              color: Colors.textSecondary,
+              fontSize: 14,
+              marginTop: 4,
+            }}
+          >
+            Logged in as {user.email}
+          </Text>
+        )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
+        {!isLoading && !user && (
+          <>
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push("/auth/login")}
+            >
+              <Text style={styles.settingLabel}>Log In</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push("/auth/signup")}
+            >
+              <Text style={styles.settingLabel}>Sign Up</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </>
+        )}
+        {!isLoading && user && (
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={handleLogout}
+          >
+            <Text style={styles.settingLabel}>Log Out</Text>
+            <ChevronRight size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+
 
         <View style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
@@ -166,7 +222,7 @@ export default function SettingsScreen() {
 
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={() => router.push("/help")} // ✅ navigate to /help
+          onPress={() => router.push("/help")} 
         >
           <View style={styles.settingIconContainer}>
             <HelpCircle size={20} color={Colors.primary} />
@@ -177,7 +233,7 @@ export default function SettingsScreen() {
 
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={() => router.push("/about")} // ✅ navigate to /about
+          onPress={() => router.push("/about")}
         >
           <View style={styles.settingIconContainer}>
             <Info size={20} color={Colors.primary} />

@@ -12,6 +12,8 @@ type UserPayload = {
 
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
   const authHeader = opts.req.headers.get("authorization");
+  console.log("🔒 Received Authorization header:", authHeader);
+
   let user: UserPayload | null = null;
 
   if (authHeader?.startsWith("Bearer ")) {
@@ -19,14 +21,15 @@ export const createContext = async (opts: FetchCreateContextFnOptions) => {
 
     try {
       user = jwt.verify(token, JWT_SECRET) as UserPayload;
+      console.log("✅ Verified user from token:", user);
     } catch (err) {
-      console.warn("Invalid JWT");
+      console.warn("❌ Invalid JWT:", err);
     }
   }
 
   return {
     req: opts.req,
-    user, //  Attach to context
+    user,
   };
 };
 
@@ -39,7 +42,6 @@ const t = initTRPC.context<Context>().create({
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
-//protected routes
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new Error("Unauthorized");

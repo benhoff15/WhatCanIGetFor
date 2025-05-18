@@ -26,6 +26,7 @@ export const trpcClient = trpc.createClient({
       transformer: superjson,
       fetch: async (input, init) => {
         const token = await getToken("authToken");
+        console.log("🔑 token in fetch:", token);
         return fetch(input, {
           ...init,
           headers: {

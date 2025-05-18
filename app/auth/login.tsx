@@ -10,7 +10,8 @@ type AuthData = {
   password: string;
 };
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = "http://localhost:8080";
+
 
 export default function LoginScreen() {
   const router = useRouter();

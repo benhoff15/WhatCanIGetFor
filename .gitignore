@@ -14,6 +14,7 @@ web-build/
 dist/
 build/
 expo-env.d.ts
+.expo-router/
 
 # Android/iOS build output (if used later)
 android/
@@ -71,3 +72,9 @@ lib/prisma.d.ts
 # VERCEL
 # ------------------------
 .vercel
+
+# VS Code settings
+.vscode/
+
+# Expo Prebuild iOS/Android folders if using EAS
+.expo-shared/
