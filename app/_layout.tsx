@@ -1,8 +1,8 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { ThemeProvider } from "@/providers/theme";
@@ -10,6 +10,7 @@ import { AuthProvider } from "@/providers/auth";
 import Toast from "react-native-toast-message";
 import { ErrorBoundary } from "./error-boundary";
 import { useColors } from "@/constants/colors";
+import { useOnboardingStore } from "@/store/onboardingStore";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -59,6 +60,17 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const Colors = useColors();
+  const router = useRouter();
+  const hasSeenOnboarding = useOnboardingStore((s) => s.hasCompletedOnboarding);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!hasSeenOnboarding) {
+        router.replace("/onboarding");
+      }
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <Stack
@@ -76,6 +88,7 @@ function RootLayoutNav() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
     </Stack>
   );
 }
