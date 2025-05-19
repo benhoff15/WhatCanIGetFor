@@ -16,6 +16,7 @@ import Constants from "expo-constants";
 import { Image } from "react-native";
 import { ImageBackground } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSearchStore } from "@/store/searchStore";
 
 import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
@@ -29,6 +30,7 @@ export default function AdventureDetailScreen() {
   const Colors = useColors();
   const styles = createStyles(Colors);
   const navigation = useNavigation();
+  const { addRecentSearch } = useSearchStore();
   
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
@@ -89,6 +91,14 @@ const handleBookNow = () => {
   }
 
   if (adventure?.bookingUrl) {
+    addRecentSearch({
+      id: adventure.id,
+      title: adventure.title,
+      location: adventure.location,
+      price: adventure.price,
+      adventureType: adventure.type || "", // Fallback in case type is missing
+    });
+
     Linking.openURL(adventure.bookingUrl);
   } else {
     Toast.show({
@@ -97,6 +107,7 @@ const handleBookNow = () => {
     });
   }
 };
+
 
   return (
     <>

@@ -19,11 +19,21 @@ import { useSearchStore } from "@/store/searchStore";
 import AdventureTypeSelector from "@/components/AdventureTypeSelector";
 import LocationSelector from "@/components/LocationSelector";
 import Logo from "@/components/Logo";
+import { Trash2 } from "lucide-react-native";
+import Toast from "react-native-toast-message";
 
 export default function HomeScreen() {
   const router = useRouter();
   const Colors = useColors();
-  const { budget, setBudget, adventureType, location } = useSearchStore();
+  const {
+    budget,
+    setBudget,
+    adventureType,
+    location,
+    restoreSearch,
+    recentSearches,
+    removeRecentSearch,
+  } = useSearchStore();
   const [isFocused, setIsFocused] = useState(false);
 
   const handleSearch = () => {
@@ -31,6 +41,27 @@ export default function HomeScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     router.push("/results");
+  };
+
+  const handleRestore = (search: typeof recentSearches[0]) => {
+    useSearchStore.getState().setBudget(search.price);
+
+    restoreSearch({
+      adventureType: search.adventureType,
+      location: search.location,
+      budget: search.price,
+    });
+
+    router.push("/results");
+
+  };
+
+  const handleRemoveRecent = (id: string) => {
+    removeRecentSearch(id);
+    Toast.show({
+      type: "info",
+      text1: "Removed from recent searches",
+    });
   };
 
   const isSearchEnabled = budget > 0 && adventureType && location;
@@ -46,7 +77,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoWrapper}>
-          <Logo size={84} />
+          <Logo size={150} />
         </View>
 
         <Text
@@ -64,9 +95,7 @@ export default function HomeScreen() {
           Discover curated adventures that fit your budget
         </Text>
 
-        <Text style={[styles.title, { color: Colors.text }]}>
-          What could I get for...
-        </Text>
+        <Text style={[styles.title, { color: Colors.text }]}>What could I get for...</Text>
 
         <View
           style={{
@@ -129,10 +158,45 @@ export default function HomeScreen() {
             <Text style={styles.searchButtonText}>Find Adventures</Text>
           </LinearGradient>
         </TouchableOpacity>
+
+        {recentSearches.length > 0 && (
+          <View style={{ marginTop: 24 }}>
+            <Text style={[styles.sectionTitle, { color: Colors.text }]}>Recent Searches</Text>
+            {recentSearches.map((s, i) => (
+              <View
+                key={s.id}
+                style={{
+                  backgroundColor: Colors.iconBackground,
+                  padding: 12,
+                  borderRadius: 10,
+                  marginBottom: 8,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity onPress={() => handleRestore(s)} style={{ flex: 1 }}>
+                  <Text style={{ color: Colors.text }}>
+                    {s.title} — {s.location} — ${s.price}
+                  </Text>
+                </TouchableOpacity>
+            
+                <TouchableOpacity
+                  onPress={() => handleRemoveRecent(s.id)}
+                  style={{ padding: 8 }}
+                >
+                  <Trash2 size={20} color={Colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+      
+
 
 const styles = StyleSheet.create({
   container: {
