@@ -13,6 +13,9 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import Constants from "expo-constants";
+import { Image } from "react-native";
+import { ImageBackground } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
@@ -127,7 +130,34 @@ const handleBookNow = () => {
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
-            <Text style={styles.title}>{adventure.title}</Text>
+
+            {adventure.imageUrl && (
+              <ImageBackground
+                source={{ uri: adventure.imageUrl }}
+                style={{
+                  width: "100%",
+                  aspectRatio: 3 / 2,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  marginBottom: 16,
+                }}
+                imageStyle={{ borderRadius: 12 }}
+              >
+                <LinearGradient
+                  colors={["rgba(0,0,0,0.4)", "transparent"]}
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "50%",
+                  }}
+                />
+              </ImageBackground>
+            )}
+            <Text style={[styles.title, { fontSize: 26, textTransform: "capitalize" }]}>
+              {adventure.title}
+            </Text>
 
             <View style={styles.infoRow}>
               <View style={styles.infoItem}>
@@ -150,6 +180,7 @@ const handleBookNow = () => {
               )}
             </View>
 
+            <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: 24 }} />
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${adventure.price}</Text>

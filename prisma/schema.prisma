@@ -18,6 +18,7 @@ model Adventure {
   duration    String?
   details     String
   bookingUrl  String?
+  imageUrl    String?
 }
 
 model User {

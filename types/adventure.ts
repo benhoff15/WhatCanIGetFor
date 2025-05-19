@@ -9,4 +9,5 @@ export interface Adventure {
   duration?: string | null;
   details: string[];
   bookingUrl?: string;
+  imageUrl?: string;
 }
