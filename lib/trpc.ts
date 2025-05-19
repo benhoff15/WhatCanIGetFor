@@ -11,9 +11,6 @@ const getBaseUrl = () => {
   const expoUrl = Constants?.expoConfig?.extra?.RORK_API_BASE_URL;
   if (expoUrl) return expoUrl;
 
-  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL)
-    return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-
   if (typeof window !== "undefined") return "";
 
   return "http://localhost:8080";

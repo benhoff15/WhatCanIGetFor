@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.spontaneous-getaway-finder"
+      "package": "com.benji.whatcanigetfor"
     },
     "web": {
       "favicon": "./assets/logo.png"

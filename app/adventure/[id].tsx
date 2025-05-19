@@ -32,9 +32,7 @@ export default function AdventureDetailScreen() {
   const [adventure, setAdventure] = useState<Adventure | null>(null);
 
   const baseUrl =
-    Constants?.expoConfig?.extra?.RORK_API_BASE_URL ||
-    process.env.EXPO_PUBLIC_RORK_API_BASE_URL ||
-    "http://localhost:8080";
+    Constants?.expoConfig?.extra?.RORK_API_BASE_URL || "http://localhost:8080";
 
   useEffect(() => {
     const fetchAdventure = async () => {
