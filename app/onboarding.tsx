@@ -1,13 +1,5 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-  ScrollView,
-} from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -51,17 +43,30 @@ const slides = [
 
 export default function OnboardingScreen() {
   const [index, setIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const Colors = useColors();
   const router = useRouter();
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
 
   const handleNext = () => {
-    if (index === slides.length - 1) {
-      completeOnboarding();
-      router.replace("/");
-    } else {
-      setIndex(index + 1);
-    }
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      if (index === slides.length - 1) {
+        completeOnboarding();
+        router.replace("/");
+      } else {
+        setIndex((prev) => prev + 1);
+        fadeAnim.setValue(0);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
   };
 
   const slide = slides[index];
@@ -69,12 +74,9 @@ export default function OnboardingScreen() {
   return (
     <LinearGradient
       colors={["#eaf0ff", "#f8fbff"]}
-      style={{ flex: 1 }}
+      style={[styles.container, { paddingTop: 60 }]}
     >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
+      <Animated.View style={{ opacity: fadeAnim, alignItems: "center" }}>
         <Image
           source={slide.image}
           style={{
@@ -82,7 +84,6 @@ export default function OnboardingScreen() {
             height: width * 0.35,
             resizeMode: "contain",
             marginBottom: 8,
-            alignSelf: "center",
           }}
         />
 
@@ -90,27 +91,26 @@ export default function OnboardingScreen() {
           <Text style={[styles.title, { color: Colors.text }]}>{slide.title}</Text>
           <Text style={[styles.body, { color: Colors.textSecondary }]}>{slide.body}</Text>
         </View>
+      </Animated.View>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: Colors.primary }]}
-          onPress={handleNext}
-        >
-          <Text style={styles.buttonText}>
-            {index === slides.length - 1 ? "Get Started" : "Next"}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: Colors.primary }]}
+        onPress={handleNext}
+      >
+        <Text style={styles.buttonText}>
+          {index === slides.length - 1 ? "Get Started" : "Next"}
+        </Text>
+      </TouchableOpacity>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 48,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
   },
   textContainer: {
     alignItems: "center",
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     borderRadius: 12,
     elevation: 2,
-    marginTop: 16,
+    marginBottom: 48,
   },
   buttonText: {
     color: "#fff",
