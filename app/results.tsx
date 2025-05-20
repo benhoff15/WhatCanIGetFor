@@ -44,13 +44,26 @@ useEffect(() => {
     headerShadowVisible: true,
   });
 }, [navigation, Colors]);
-  const { budget, adventureType, location } = useSearchStore();
+  const {
+    budget,
+    adventureType,
+    location,
+    timeOfDay,
+    groupSize,
+    startDate,
+    endDate,
+  } = useSearchStore();
+
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
 
   const trimmedPayload = {
     budget: Number(budget),
     adventureType: adventureType.trim().toLowerCase(),
     location: location.trim(),
+    timeOfDay,
+    groupSize,
+    startDate,
+    endDate,
   };
 
   const { data, isLoading, error } = trpc.search.getAdventures.useQuery(trimmedPayload);

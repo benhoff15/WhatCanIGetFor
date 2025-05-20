@@ -22,6 +22,7 @@ import Logo from "@/components/Logo";
 import { Trash2 } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 
+
 export default function HomeScreen() {
   const router = useRouter();
   const Colors = useColors();
@@ -35,11 +36,25 @@ export default function HomeScreen() {
     removeRecentSearch,
   } = useSearchStore();
   const [isFocused, setIsFocused] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [timeOfDay, setTimeOfDay] = useState<string | null>(null);
+  const [groupSize, setGroupSize] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDateInput, setStartDateInput] = useState("");
+  const [endDateInput, setEndDateInput] = useState("");
 
   const handleSearch = () => {
+    const store = useSearchStore.getState();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+
+    store.setTimeOfDay(timeOfDay);
+    store.setGroupSize(groupSize);
+    store.setStartDate(startDate ? startDate.toISOString() : null);
+    store.setEndDate(endDate ? endDate.toISOString() : null);
+    
     router.push("/results");
   };
 
@@ -138,6 +153,119 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: Colors.text }]}>Location</Text>
           <LocationSelector />
         </View>
+          
+        <TouchableOpacity onPress={() => setShowAdvanced((prev) => !prev)} style={{ marginTop: 4, alignItems: "center" }}>
+          <Text style={{ color: Colors.primary, fontWeight: "600" }}>
+            {showAdvanced ? "Hide Advanced Search" : "Show Advanced Search"}
+          </Text>
+        </TouchableOpacity>
+
+        {showAdvanced && (
+          <View style={{ marginTop: 16, gap: 16 }}>
+            {/* Time of Day Filter */}
+            <View>
+              <Text style={[styles.sectionTitle, { color: Colors.text }]}>Time of Day</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {["Morning", "Afternoon", "Evening", "Flexible"].map((label) => (
+                  <TouchableOpacity
+                    key={label}
+                    onPress={() => setTimeOfDay(label)}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 8,
+                      backgroundColor: timeOfDay === label ? Colors.primary : Colors.grayLight,
+                    }}
+                  >
+                    <Text style={{ color: timeOfDay === label ? "white" : Colors.text }}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Group Size Filter */}
+            <View>
+              <Text style={[styles.sectionTitle, { color: Colors.text }]}>Group Size</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {["Solo", "Couple", "Small Group", "Large Group"].map((label) => (
+                  <TouchableOpacity
+                    key={label}
+                    onPress={() => setGroupSize(label)}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 8,
+                      backgroundColor: groupSize === label ? Colors.primary : Colors.grayLight,
+                    }}
+                  >
+                    <Text style={{ color: groupSize === label ? "white" : Colors.text }}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Date Range Filter */}
+            <View>
+              <Text style={[styles.sectionTitle, { color: Colors.text }]}>Date Range: Earliest to Latest</Text>
+
+              <Text style={{ color: Colors.textSecondary, marginBottom: 4 }}>Earliest Date</Text>
+              <TextInput
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: Colors.iconBackground,
+                  color: Colors.text,
+                  marginBottom: 8,
+                }}
+                value={startDateInput}
+                onChangeText={(text) => {
+                  setStartDateInput(text);
+                  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                  if (isoDateRegex.test(text)) {
+                    const parsed = new Date(text);
+                  if (!isNaN(parsed.getTime())) { 
+                    setStartDate(parsed);
+                  }
+                } else {
+                  setStartDate(null);
+                }
+              }}
+              placeholder="YYYY-MM-DD"
+              inputMode="text"
+              keyboardType="numbers-and-punctuation"
+              />
+
+              <Text style={{ color: Colors.textSecondary, marginBottom: 4 }}>Latest Date</Text>
+              <TextInput
+                style={{
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: Colors.iconBackground,
+                  color: Colors.text,
+                }}
+                value={endDateInput}
+                onChangeText={(text) => {
+                  setEndDateInput(text);
+                  const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                  if (isoDateRegex.test(text)) {
+                    const parsed = new Date(text);
+                  if (!isNaN(parsed.getTime())) {
+                    setEndDate(parsed);
+                  }
+                } else {
+                  setEndDate(null);
+                }
+              }}
+              placeholder="YYYY-MM-DD"
+              inputMode="text"
+              keyboardType="numbers-and-punctuation"
+              />
+
+              </View>
+            </View>
+          )}
 
         <TouchableOpacity
           style={[styles.searchButton, !isSearchEnabled && styles.searchButtonDisabled]}

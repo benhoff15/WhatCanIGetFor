@@ -14,7 +14,9 @@ model Adventure {
   location    String
   price       Int
   description String
-  date        String?
+  date        DateTime?
+  timeOfDay   String?
+  groupSize   String?
   duration    String?
   details     String
   bookingUrl  String?
