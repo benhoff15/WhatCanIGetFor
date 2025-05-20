@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
+import { Users, AlarmClock } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import Constants from "expo-constants";
 import { Image } from "react-native";
@@ -72,6 +73,14 @@ export default function AdventureDetailScreen() {
       }
     }
   };
+
+  const formatUTCDate = (isoDate: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(isoDate));
 
   const handleBack = () => {
     router.back();
@@ -143,29 +152,21 @@ const handleBookNow = () => {
           <View style={styles.content}>
 
             {adventure.imageUrl && (
-              <ImageBackground
+              <Image
                 source={{ uri: adventure.imageUrl }}
                 style={{
                   width: "100%",
-                  aspectRatio: 3 / 2,
+                  height: 400,
+                  alignSelf: "center",
                   borderRadius: 12,
-                  overflow: "hidden",
                   marginBottom: 16,
+                  backgroundColor: Colors.cardBackground,
                 }}
-                imageStyle={{ borderRadius: 12 }}
-              >
-                <LinearGradient
-                  colors={["rgba(0,0,0,0.4)", "transparent"]}
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: "50%",
-                  }}
-                />
-              </ImageBackground>
+                resizeMode="contain"
+              />
             )}
+
+
             <Text style={[styles.title, { fontSize: 26, textTransform: "capitalize" }]}>
               {adventure.title}
             </Text>
@@ -179,7 +180,9 @@ const handleBookNow = () => {
               {adventure.date && (
                 <View style={styles.infoItem}>
                   <Calendar size={16} color={Colors.primary} />
-                  <Text style={styles.infoText}>{adventure.date}</Text>
+                  <Text style={styles.infoText}>
+                    {formatUTCDate(adventure.date)}
+                  </Text>
                 </View>
               )}
 
@@ -189,6 +192,23 @@ const handleBookNow = () => {
                   <Text style={styles.infoText}>{adventure.duration}</Text>
                 </View>
               )}
+
+              {adventure.timeOfDay && (
+                <View style={styles.infoItem}>
+                  <AlarmClock size={16} color={Colors.primary} />
+                  <Text style={styles.infoText}>
+                    {adventure.timeOfDay.charAt(0).toUpperCase() + adventure.timeOfDay.slice(1)}
+                  </Text>
+                  </View>
+                )}
+
+              {adventure.groupSize && (
+                <View style={styles.infoItem}>
+                  <Users size={16} color={Colors.primary} />
+                  <Text style={styles.infoText}>{adventure.groupSize}</Text>
+                </View>
+              )}
+
             </View>
 
             <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: 24 }} />

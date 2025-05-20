@@ -26,6 +26,15 @@ export default function SavedScreen() {
     });
   };
 
+  const formatUTCDate = (isoDate: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+      }).format(new Date(isoDate));
+
+      
   const handleTripPress = (id: string) => {
     router.push(`/trip/${id}`);
   };
@@ -48,33 +57,70 @@ export default function SavedScreen() {
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.tripCard, {
+            style={[
+              styles.tripCard,
+              {
               backgroundColor: Colors.cardBackground,
               borderColor: Colors.border,
-            }]}
+              },
+            ]}
             onPress={() => handleTripPress(item.id)}
           >
             <View style={styles.tripInfo}>
               <Text style={[styles.tripType, { color: Colors.primary }]}>
                 {item.type}
               </Text>
+
               <Text style={[styles.tripTitle, { color: Colors.text }]}>
                 {item.title}
               </Text>
-              <Text style={[styles.tripLocation, { color: Colors.textSecondary }]}>
-                {item.location}
-              </Text>
-              <Text style={[styles.tripPrice, { color: Colors.text }]}>
-                ${item.price}
-              </Text>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 }}>
+                {item.location && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Text style={{ color: Colors.textSecondary }}>📍</Text>
+                    <Text style={{ color: Colors.textSecondary }}>{item.location}</Text>
+                  </View>
+                )}
+
+                {item.date && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Text style={{ color: Colors.textSecondary }}>📅</Text>
+                    <Text style={{ color: Colors.textSecondary }}>
+                      {formatUTCDate(item.date)}
+                  </Text>
+                </View>
+              )}
+
+              {item.timeOfDay && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <Text style={{ color: Colors.textSecondary }}>🕒</Text>
+                  <Text style={{ color: Colors.textSecondary }}>
+                    {item.timeOfDay.charAt(0).toUpperCase() + item.timeOfDay.slice(1)}
+                  </Text>
+                </View>
+              )}
+
+              {item.groupSize && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <Text style={{ color: Colors.textSecondary }}>👥</Text>
+                  <Text style={{ color: Colors.textSecondary }}>{item.groupSize}</Text>
+                </View>
+              )}
             </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => handleRemove(item.id)}
-            >
-              <Trash2 size={20} color={Colors.error} />
-            </TouchableOpacity>
+
+            <Text style={[styles.tripPrice, { color: Colors.text, marginTop: 8 }]}>
+              ${item.price}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemove(item.id)}
+          >
+            <Trash2 size={20} color={Colors.error} />
           </TouchableOpacity>
+        </TouchableOpacity>
         )}
       />
     </View>

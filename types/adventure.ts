@@ -10,4 +10,6 @@ export interface Adventure {
   details: string[];
   bookingUrl?: string;
   imageUrl?: string;
+  timeOfDay?: string | null;
+  groupSize?: string | null; 
 }

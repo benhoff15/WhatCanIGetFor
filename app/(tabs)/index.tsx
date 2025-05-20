@@ -169,7 +169,9 @@ export default function HomeScreen() {
                 {["Morning", "Afternoon", "Evening", "Flexible"].map((label) => (
                   <TouchableOpacity
                     key={label}
-                    onPress={() => setTimeOfDay(label)}
+                    onPress={() =>
+                      setTimeOfDay(timeOfDay === label ? null : label)
+                    }
                     style={{
                       paddingVertical: 8,
                       paddingHorizontal: 12,
@@ -190,7 +192,9 @@ export default function HomeScreen() {
                 {["Solo", "Couple", "Small Group", "Large Group"].map((label) => (
                   <TouchableOpacity
                     key={label}
-                    onPress={() => setGroupSize(label)}
+                    onPress={() =>
+                      setGroupSize(groupSize === label ? null : label)
+                    }
                     style={{
                       paddingVertical: 8,
                       paddingHorizontal: 12,

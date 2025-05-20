@@ -30,6 +30,8 @@ type Adventure = {
   date?: string | null;
   duration?: string | null;
   details: string[];
+  timeOfDay?: string | null;
+  groupSize?: string | null;
 };
 
 export default function ResultsScreen() {
@@ -77,6 +79,14 @@ useEffect(() => {
       addTrip(adventure);
     }
   };
+
+  const formatUTCDate = (isoDate: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(isoDate));
 
   const styles = StyleSheet.create({
     centered: {
@@ -156,6 +166,21 @@ return (
               <Text style={styles.metaText}>{item.location}</Text>
               <Text style={styles.metaText}>${item.price}</Text>
             </View>
+
+            <View style={styles.meta}>
+              <Text style={styles.metaText}>📅 {formatUTCDate(item.date)}</Text>
+
+              {item.timeOfDay && (
+                <Text style={styles.metaText}>
+                  🕒 {item.timeOfDay.charAt(0).toUpperCase() + item.timeOfDay.slice(1)}
+                 </Text>
+              )}
+
+              {item.groupSize && (
+                <Text style={[styles.metaText, { marginLeft: 12 }]}>👥 {item.groupSize}</Text>
+                )}
+            </View>
+
             <View style={styles.bookmark}>
               <Bookmark
                 size={20}
