@@ -1,80 +1,108 @@
-import React from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { Plane, Hotel, Utensils, Compass } from "lucide-react-native";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Platform,
+  Animated,
+} from "react-native";
+import {
+  Plane,
+  BedDouble,
+  Utensils,
+  MountainSnow,
+  Compass,
+} from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useColors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
-import { ADVENTURE_TYPES } from "@/constants/adventureTypes";
+
+const ADVENTURE_TYPES_DATA = [
+  { id: "flight", name: "Flights", icon: Plane },
+  { id: "hotel", name: "Stays", icon: BedDouble },
+  { id: "food", name: "Food", icon: Utensils },
+  { id: "activity", name: "Activities", icon: MountainSnow },
+];
 
 export default function AdventureTypeSelector() {
   const Colors = useColors();
   const { adventureType, setAdventureType } = useSearchStore();
+  const [pressedButton, setPressedButton] = useState<string | null>(null);
+  const scaleAnim = new Animated.Value(1);
 
-  const handleSelect = (type: string) => {
-    if (Platform.OS !== "web") Haptics.selectionAsync();
-    setAdventureType(type);
-  };
-
-  const getIcon = (type: string, isSelected: boolean) => {
-    const color = isSelected ? "#fff" : Colors.textSecondary;
-    const size = 20;
-
-    switch (type) {
-      case "Flight":
-        return <Plane size={size} color={color} />;
-      case "Hotel":
-        return <Hotel size={size} color={color} />;
-      case "Restaurant":
-        return <Utensils size={size} color={color} />;
-      case "Activity":
-        return <Compass size={size} color={color} />;
-      default:
-        return <Compass size={size} color={color} />;
+  const handleSelect = (typeId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    setAdventureType(typeId);
+
+    // Animation for press
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   return (
     <View style={styles.container}>
-      {ADVENTURE_TYPES.map((type) => {
-        const isSelected = adventureType === type;
+      {ADVENTURE_TYPES_DATA.map((type) => {
+        const isSelected = adventureType === type.id;
+        const IconComponent = type.icon;
+
+        const dynamicStyles = {
+          borderColor: isSelected ? "transparent" : Colors.border,
+          borderWidth: isSelected ? 0 : 1,
+          shadowOpacity: isSelected ? 0.2 : 0.05,
+          shadowRadius: isSelected ? 5 : 3,
+          elevation: isSelected ? 4 : 1,
+          transform: [{ scale: pressedButton === type.id ? scaleAnim : 1 }],
+        };
+
+        const textAndIconColor = isSelected ? "#fff" : Colors.text;
 
         return (
           <TouchableOpacity
-            key={type}
+            key={type.id}
             style={styles.buttonWrapper}
-            onPress={() => handleSelect(type)}
-            activeOpacity={0.9}
+            onPress={() => handleSelect(type.id)}
+            onPressIn={() => setPressedButton(type.id)}
+            onPressOut={() => setPressedButton(null)}
+            activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={
-                isSelected
-                  ? [Colors.primary, Colors.secondary]
-                  : [Colors.cardBackground, Colors.cardBackground]
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                styles.typeButton,
-                {
-                  borderColor: isSelected ? Colors.primary : Colors.border,
-                  shadowOpacity: isSelected ? 0.15 : 0.05,
-                  elevation: isSelected ? 3 : 1,
-                },
-              ]}
-            >
-              {getIcon(type, isSelected)}
-              <Text
-                style={[
-                  styles.typeText,
-                  { color: isSelected ? "#fff" : Colors.text },
-                ]}
+            <Animated.View style={[styles.typeButtonOuter, dynamicStyles]}>
+              <LinearGradient
+                colors={
+                  isSelected
+                    ? [Colors.primary, Colors.secondary]
+                    : [Colors.cardBackground, Colors.cardBackground]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradientBackground}
               >
-                {type}
-              </Text>
-            </LinearGradient>
+                <View style={styles.buttonContent}>
+                  <IconComponent
+                    color={textAndIconColor}
+                    size={20}
+                    style={styles.icon}
+                  />
+                  <Text style={[styles.typeText, { color: textAndIconColor }]}>
+                    {type.name}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </Animated.View>
           </TouchableOpacity>
         );
       })}
@@ -90,23 +118,31 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   buttonWrapper: {
-    flexBasis: "48%",
+    width: "48%",
+    marginBottom: 12,
   },
-  typeButton: {
-    borderRadius: 14,
-    paddingVertical: 12, // reduced from 16
-    paddingHorizontal: 10,
+  typeButtonOuter: {
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+  },
+  gradientBackground: {
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  buttonContent: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 4,
-    backgroundColor: "transparent",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  icon: {
+    marginRight: 8,
   },
   typeText: {
-    marginTop: 6,
     fontSize: 14,
     fontWeight: "600",
+    textAlign: "center",
   },
 });
