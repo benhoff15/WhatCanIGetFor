@@ -1,19 +1,155 @@
 import React from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated } from "react-native";
 import { useRouter } from "expo-router";
-import { Trash2 } from "lucide-react-native";
+import {
+  Trash2,
+  Heart,
+  Plane,
+  BedDouble,
+  Utensils,
+  Compass,
+  Image as ImageIcon,
+  MapPin as LocationIcon,
+  CalendarDays,
+  Clock,
+  Users,
+} from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
 
-import { useColors } from "@/constants/colors"; // ✅ Themed colors
+import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
 import Toast from "react-native-toast-message";
 
+interface SavedTripCardProps {
+  item: any;
+  componentStyles: any;
+  Colors: any;
+  onPressTrip: (id: string) => void;
+  onRemoveTrip: (id: string) => void;
+  getTripTypeIcon: (type: string) => JSX.Element | null;
+  formatUTCDate: (isoDate: string) => string;
+}
+
+const SavedTripCard = (props: SavedTripCardProps) => {
+  const { 
+    item, 
+    componentStyles, 
+    Colors, 
+    onPressTrip, 
+    onRemoveTrip, 
+    getTripTypeIcon, 
+    formatUTCDate 
+  } = props;
+
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressInCard = () => {
+    Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true, friction: 7 }).start();
+  };
+
+  const handlePressOutCard = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, friction: 7 }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[componentStyles.tripCard, { backgroundColor: Colors.cardBackground }]}
+        onPress={() => onPressTrip(item.id)}
+        onPressIn={handlePressInCard}
+        onPressOut={handlePressOutCard}
+        activeOpacity={0.9} 
+      >
+        <View style={componentStyles.thumbnailPlaceholder}>
+          <ImageIcon size={48} color={Colors.textSecondary} />
+        </View>
+
+        <View style={componentStyles.infoContainer}>
+          <Text style={componentStyles.cardTitle}>{item.title}</Text>
+          
+          <View style={componentStyles.iconTextContainer}>
+            {getTripTypeIcon(item.type)}
+            <Text style={componentStyles.cardSubtitle}>{item.type?.charAt(0).toUpperCase() + item.type?.slice(1)}</Text>
+          </View>
+
+          {item.location && (
+            <View style={componentStyles.iconTextContainer}>
+              <LocationIcon size={16} color={Colors.textSecondary} style={componentStyles.subtitleIcon} />
+              <Text style={componentStyles.cardSubtitle}>{item.location}</Text>
+            </View>
+          )}
+
+          {item.date && (
+            <View style={componentStyles.iconTextContainer}>
+               <CalendarDays size={16} color={Colors.textSecondary} style={componentStyles.subtitleIcon} />
+              <Text style={componentStyles.cardSubtitle}>{formatUTCDate(item.date)}</Text>
+            </View>
+          )}
+          
+          {item.timeOfDay && (
+             <View style={componentStyles.iconTextContainer}>
+              <Clock size={16} color={Colors.textSecondary} style={componentStyles.subtitleIcon} />
+              <Text style={componentStyles.cardSubtitle}>
+                {item.timeOfDay.charAt(0).toUpperCase() + item.timeOfDay.slice(1)}
+              </Text>
+            </View>
+          )}
+
+          {item.groupSize && (
+            <View style={componentStyles.iconTextContainer}>
+              <Users size={16} color={Colors.textSecondary} style={componentStyles.subtitleIcon} />
+              <Text style={componentStyles.cardSubtitle}>{item.groupSize}</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={componentStyles.priceActionsContainer}>
+          <Text style={componentStyles.cardPrice}>${item.price}</Text>
+          <View style={componentStyles.cardActions}>
+            <TouchableOpacity style={componentStyles.actionButton}>
+              <Heart size={20} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={componentStyles.actionButton}
+              onPress={(e) => { 
+                e.stopPropagation(); 
+                onRemoveTrip(item.id);
+              }}
+            >
+              <Trash2 size={20} color={Colors.error} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 export default function SavedScreen() {
-  const Colors = useColors(); // ✅ Access themed palette
+  const Colors = useColors();
+  const componentStyles = styles(Colors);
   const router = useRouter();
   const { savedTrips, removeTrip } = useSavedTripsStore();
+
+  const getTripTypeIcon = (type: string) => {
+    const iconSize = 16;
+    const iconColor = Colors.textSecondary;
+    switch (type?.toLowerCase()) {
+      case "flight":
+        return <Plane size={iconSize} color={iconColor} style={componentStyles.subtitleIcon} />;
+      case "hotel":
+      case "stay":
+        return <BedDouble size={iconSize} color={iconColor} style={componentStyles.subtitleIcon} />;
+      case "food":
+      case "restaurant":
+        return <Utensils size={iconSize} color={iconColor} style={componentStyles.subtitleIcon} />;
+      case "activity":
+      default:
+        return <Compass size={iconSize} color={iconColor} style={componentStyles.subtitleIcon} />;
+    }
+  };
 
   const handleRemove = (id: string) => {
     if (Platform.OS !== 'web') {
@@ -22,7 +158,7 @@ export default function SavedScreen() {
     removeTrip(id);
     Toast.show({
       type: "info",
-      text1: "Removed from saved",
+      text1: "Removed from saved adventures",
     });
   };
 
@@ -45,126 +181,128 @@ export default function SavedScreen() {
         title="No saved adventures"
         message="Your saved adventures will appear here"
         icon="bookmark"
+        actionButtonLabel="Go Explore"
+        onActionButtonPress={() => router.push("/")}
       />
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <View style={[componentStyles.container, { backgroundColor: Colors.background }]}>
+      <View style={componentStyles.headerContainer}>
+        <Text style={componentStyles.headerIcon}>🧳</Text>
+        <Text style={componentStyles.headerTitle}>Your Adventures</Text>
+        <Text style={componentStyles.headerSubtitle}>
+          Trips you’ve bookmarked for inspiration or action.
+        </Text>
+      </View>
+
       <FlatList
         data={savedTrips}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={componentStyles.listContent}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.tripCard,
-              {
-              backgroundColor: Colors.cardBackground,
-              borderColor: Colors.border,
-              },
-            ]}
-            onPress={() => handleTripPress(item.id)}
-          >
-            <View style={styles.tripInfo}>
-              <Text style={[styles.tripType, { color: Colors.primary }]}>
-                {item.type}
-              </Text>
-
-              <Text style={[styles.tripTitle, { color: Colors.text }]}>
-                {item.title}
-              </Text>
-
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 }}>
-                {item.location && (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Text style={{ color: Colors.textSecondary }}>📍</Text>
-                    <Text style={{ color: Colors.textSecondary }}>{item.location}</Text>
-                  </View>
-                )}
-
-                {item.date && (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Text style={{ color: Colors.textSecondary }}>📅</Text>
-                    <Text style={{ color: Colors.textSecondary }}>
-                      {formatUTCDate(item.date)}
-                  </Text>
-                </View>
-              )}
-
-              {item.timeOfDay && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <Text style={{ color: Colors.textSecondary }}>🕒</Text>
-                  <Text style={{ color: Colors.textSecondary }}>
-                    {item.timeOfDay.charAt(0).toUpperCase() + item.timeOfDay.slice(1)}
-                  </Text>
-                </View>
-              )}
-
-              {item.groupSize && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <Text style={{ color: Colors.textSecondary }}>👥</Text>
-                  <Text style={{ color: Colors.textSecondary }}>{item.groupSize}</Text>
-                </View>
-              )}
-            </View>
-
-            <Text style={[styles.tripPrice, { color: Colors.text, marginTop: 8 }]}>
-              ${item.price}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemove(item.id)}
-          >
-            <Trash2 size={20} color={Colors.error} />
-          </TouchableOpacity>
-        </TouchableOpacity>
+          <SavedTripCard
+            item={item}
+            componentStyles={componentStyles}
+            Colors={Colors}
+            onPressTrip={handleTripPress}
+            onRemoveTrip={handleRemove}
+            getTripTypeIcon={getTripTypeIcon}
+            formatUTCDate={formatUTCDate}
+          />
         )}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (Colors: any) => StyleSheet.create({ 
   container: {
     flex: 1,
   },
-  listContent: {
-    padding: 16,
+  headerContainer: { 
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    alignItems: 'center',
   },
-  tripCard: {
-    flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  tripInfo: {
-    flex: 1,
-  },
-  tripType: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  tripTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  tripLocation: {
-    fontSize: 14,
+  headerIcon: { 
+    fontSize: 32,
     marginBottom: 8,
   },
-  tripPrice: {
-    fontSize: 16,
-    fontWeight: "700",
+  headerTitle: { 
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text,
+    textAlign: 'center',
   },
-  removeButton: {
-    justifyContent: "center",
-    padding: 8,
+  headerSubtitle: { 
+    fontSize: 15,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 6,
+    maxWidth: '80%',
+  },
+  listContent: {
+    paddingHorizontal: 16, 
+    paddingBottom: 16, 
+  },
+  tripCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  thumbnailPlaceholder: {
+    height: 100,
+    backgroundColor: Colors.iconBackground,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoContainer: {
+    marginBottom: 12, 
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  iconTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  subtitleIcon: {
+    marginRight: 6,
+  },
+  priceActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    marginLeft: 12,
+    padding: 6,
   },
 });

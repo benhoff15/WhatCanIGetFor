@@ -22,7 +22,7 @@ import { useSearchStore } from "@/store/searchStore";
 
 const ADVENTURE_TYPES_DATA = [
   { id: "flight", name: "Flights", icon: Plane },
-  { id: "hotel", name: "Stays", icon: BedDouble },
+  { id: "hotel", name: "Hotels", icon: BedDouble },
   { id: "food", name: "Food", icon: Utensils },
   { id: "activity", name: "Activities", icon: MountainSnow },
 ];
