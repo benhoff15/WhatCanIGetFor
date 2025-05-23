@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated } from "react-native";
 import { useRouter } from "expo-router";
+import { Image } from "react-native";
 import {
   Trash2,
   Heart,
@@ -13,6 +14,8 @@ import {
   CalendarDays,
   Clock,
   Users,
+  List,
+  LayoutGrid,
 } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
@@ -20,6 +23,7 @@ import { Platform } from "react-native";
 import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import EmptyState from "@/components/EmptyState";
+import CompactTripCard from "@/components/CompactTripCard";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -131,18 +135,29 @@ const SavedTripCard = (props: SavedTripCardProps) => {
               activeOpacity={0.9}
             >
               <View style={componentStyles.thumbnailPlaceholder}>
-                <LinearGradient
-                  colors={[Colors.background, Colors.iconBackground]}
-                  style={[
-                    StyleSheet.absoluteFill,
-                    { borderRadius: componentStyles.thumbnailPlaceholder.borderRadius },
-                  ]}
-                />
-                {getTripTypeIcon(item.type, {
-                  size: 56,
-                  color: Colors.textSecondary + "77",
-                })}
-              </View>
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: componentStyles.thumbnailPlaceholder.borderRadius,
+                    }}
+                    resizeMode="cover"
+                  />
+                  ) : (
+                    <>
+                      <LinearGradient
+                        colors={[Colors.background, Colors.iconBackground]}
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { borderRadius: componentStyles.thumbnailPlaceholder.borderRadius },
+                        ]}
+                      />
+                      {getTripTypeIcon(item.type, { size: 56, color: Colors.textSecondary + '77' })}
+                    </>
+                  )}
+                </View>
 
               <View style={componentStyles.infoContainer}>
                 <Text style={componentStyles.cardTitle}>{item.title}</Text>
@@ -272,8 +287,8 @@ export default function SavedScreen() {
   const router = useRouter();
   const { savedTrips, removeTrip, addTrip } = useSavedTripsStore();
   const [lastRemovedTrip, setLastRemovedTrip] = React.useState<any | null>(null);
+  const [isCompactMode, setIsCompactMode] = React.useState(false);
 
-  // Header Animation Values
   const headerOpacity = React.useRef(new Animated.Value(0)).current;
   const headerTranslateY = React.useRef(new Animated.Value(-40)).current;
   const emojiFloatY = React.useRef(new Animated.Value(0)).current;
@@ -422,24 +437,51 @@ export default function SavedScreen() {
             </Text>
           </LinearGradient>
         </Animated.View>
+
+        <TouchableOpacity
+          style={componentStyles.toggleButton}
+          onPress={() => setIsCompactMode(prev => !prev)}
+          accessibilityLabel={isCompactMode ? "Switch to normal view" : "Switch to compact view"}
+        >
+          {isCompactMode ? (
+            <LayoutGrid size={24} color={Colors.text} />
+          ) : (
+            <List size={24} color={Colors.text} />
+          )}
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={savedTrips}
         keyExtractor={(item) => item.id}
         contentContainerStyle={componentStyles.listContent}
-        renderItem={({ item }) => (
-          <SavedTripCard
-            item={item}
-            componentStyles={componentStyles}
-            Colors={Colors}
-            onPressTrip={handleTripPress}
-            onRemoveTrip={handleRemove}
-            getTripTypeIcon={getTripTypeIcon}
-            formatUTCDate={formatUTCDate}
-            getCategoryTagColor={getCategoryTagColor}
-          />
-        )}
+        renderItem={({ item }) => {
+          if (isCompactMode) {
+            return (
+              <CompactTripCard
+                item={item}
+                Colors={Colors}
+                onPressTrip={handleTripPress}
+                onRemoveTrip={handleRemove}
+                getTripTypeIcon={getTripTypeIcon}
+                variant="saved"
+              />
+            );
+          } else {
+            return (
+              <SavedTripCard
+                item={item}
+                componentStyles={componentStyles}
+                Colors={Colors}
+                onPressTrip={handleTripPress}
+                onRemoveTrip={handleRemove}
+                getTripTypeIcon={getTripTypeIcon}
+                formatUTCDate={formatUTCDate}
+                getCategoryTagColor={getCategoryTagColor}
+              />
+            );
+          }
+        }}
       />
     </View>
   );
@@ -563,7 +605,7 @@ const styles = (Colors: any) => StyleSheet.create({
     elevation: 8,
   },
   thumbnailPlaceholder: { 
-    height: 120, 
+    height: 200,
     borderRadius: 12, 
     justifyContent: 'center',
     alignItems: 'center',
@@ -571,7 +613,6 @@ const styles = (Colors: any) => StyleSheet.create({
     overflow: 'hidden',
   },
   infoContainer: { 
-    // marginBottom: 12,
   },
   cardTitle: { 
     fontSize: 20,
@@ -624,5 +665,17 @@ const styles = (Colors: any) => StyleSheet.create({
   actionButton: {
     marginLeft: 12,
     padding: 6,
+  },
+  toggleButton: {
+    alignSelf: 'center',
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: Colors.iconBackground,
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
