@@ -18,6 +18,11 @@ export const LightColors = {
   switchThumb: "#FFFFFF",
   disabled: "#ADB5BD",
   disabledLight: "#CED4DA",
+
+  activityTagBackground: "#E6E0F8",
+  foodTagBackground: "#FDEBD0",
+  hotelTagBackground: "#D6EFED",
+  flightTagBackground: "#D6EAF8",
 };
 
 export const DarkColors = {
@@ -38,9 +43,13 @@ export const DarkColors = {
   switchThumb: "#FFF",
   disabled: "#555",
   disabledLight: "#666",
+
+  activityTagBackground: "#3A2D56",
+  foodTagBackground: "#5B4431",
+  hotelTagBackground: "#325E5C",
+  flightTagBackground: "#2E4D67",
 };
 
-// Export dynamic color hook
 export const useColors = () => {
   const theme = useTheme();
   console.log("🎨 useColors -> theme:", theme);

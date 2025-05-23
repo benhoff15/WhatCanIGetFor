@@ -1,10 +1,10 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef } from 'react'; // Added useEffect, useRef
+import { StyleSheet, Text, View, Animated, TouchableOpacity as RNTouchableOpacity } from "react-native"; // Added Animated, renamed TouchableOpacity to avoid conflict
 import { Search, Bookmark } from "lucide-react-native";
 
 import { useColors } from "@/constants/colors"; 
 
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native"; // This was from previous step, RNTouchableOpacity is for clarity if needed
 
 type EmptyStateProps = {
   title: string;
@@ -16,45 +16,75 @@ type EmptyStateProps = {
 
 export default function EmptyState({ title, message, icon, actionButtonLabel, onActionButtonPress }: EmptyStateProps) {
   const Colors = useColors();
+  const componentStyles = getComponentStyles(Colors); 
+
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 7,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <View style={[styles.iconContainer, { backgroundColor: Colors.iconBackground }]}>
+    <Animated.View 
+      style={[
+        componentStyles.container, 
+        { 
+          backgroundColor: Colors.background,
+          opacity: opacity,
+          transform: [{ scale: scale }],
+        }
+      ]}
+    >
+      <View style={componentStyles.iconContainer}> 
         {icon === "search" ? (
-          <Search size={32} color={Colors.primary} />
+          <Search size={64} color={Colors.primary} /> 
         ) : (
-          <Bookmark size={32} color={Colors.primary} />
+          <Bookmark size={64} color={Colors.primary} /> 
         )}
       </View>
-      <Text style={[styles.title, { color: Colors.text }]}>{title}</Text>
-      <Text style={[styles.message, { color: Colors.textSecondary }]}>{message}</Text>
+      <Text style={[componentStyles.title, { color: Colors.text }]}>{title}</Text>
+      <Text style={[componentStyles.message, { color: Colors.textSecondary }]}>{message}</Text>
       {actionButtonLabel && onActionButtonPress && (
-        <TouchableOpacity 
-          style={[styles.actionButton, { backgroundColor: Colors.primary }]} 
+        <TouchableOpacity // Using the imported TouchableOpacity
+          style={[componentStyles.actionButton, { backgroundColor: Colors.primary }]} 
           onPress={onActionButtonPress}
           activeOpacity={0.8}
         >
-          <Text style={styles.actionButtonText}>{actionButtonLabel}</Text>
+          <Text style={componentStyles.actionButtonText}>{actionButtonLabel}</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
+const getComponentStyles = (Colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  iconContainer: { // Updated styles
+    width: 120, 
+    height: 120, 
+    borderRadius: 60, 
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
+    backgroundColor: Colors.iconBackground, // Moved from inline
   },
   title: {
     fontSize: 20,
