@@ -12,6 +12,9 @@ model Adventure {
   type        String
   title       String
   location    String
+  address     String?
+  latitude    Float? 
+  longitude   Float?
   price       Int
   description String
   date        DateTime?

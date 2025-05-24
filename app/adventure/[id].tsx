@@ -7,10 +7,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Platform
+  Platform,
+  Share
 } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { MapPin, Calendar, Clock, Bookmark, ArrowLeft } from "lucide-react-native";
+import { useLocalSearchParams, Stack } from "expo-router";
+import { MapPin, Calendar, Clock, Bookmark, Share2 } from "lucide-react-native"; // Added Share2
 import { Users, AlarmClock } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import Constants from "expo-constants";
@@ -23,14 +24,11 @@ import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import type { Adventure } from "@/types/adventure";
 import Toast from "react-native-toast-message";
-import { useNavigation } from "expo-router";
 
 export default function AdventureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const Colors = useColors();
   const styles = createStyles(Colors);
-  const navigation = useNavigation();
   const { addRecentSearch } = useSearchStore();
   
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
@@ -43,7 +41,7 @@ export default function AdventureDetailScreen() {
   useEffect(() => {
     const fetchAdventure = async () => {
       try {
-        const res = await fetch(`${baseUrl}/adventure/${id}`); // ✅ Updated
+        const res = await fetch(`${baseUrl}/adventure/${id}`); 
         const json = await res.json();
         console.log("Loaded adventure:", json.adventure);
         setAdventure(json.adventure || null);
@@ -82,9 +80,6 @@ export default function AdventureDetailScreen() {
       timeZone: "UTC",
     }).format(new Date(isoDate));
 
-  const handleBack = () => {
-    router.back();
-  };
 
   if (!adventure) {
     return (
@@ -117,55 +112,79 @@ const handleBookNow = () => {
   }
 };
 
+  const handleShare = async () => {
+    if (!adventure) return;
+    try {
+      await Share.share({
+        message: `${adventure.title}: ${adventure.description.substring(0, 150)}... Read more here: ${adventure.bookingUrl || ''}`,
+        title: adventure.title,
+      });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: error.message });
+    }
+  };
+
+  const handleViewMap = async () => {
+    if (!adventure || !adventure.location) return;
+
+    const encodedLocation = encodeURIComponent(adventure.location);
+    let mapUrl = '';
+
+    if (Platform.OS === 'ios') {
+      mapUrl = `maps:?q=${encodedLocation}`;
+    } else if (Platform.OS === 'android') {
+      mapUrl = `geo:0,0?q=${encodedLocation}`;
+    } else {
+      mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(mapUrl);
+      if (supported) {
+        await Linking.openURL(mapUrl);
+      } else {
+        Toast.show({ type: 'error', text1: `Don't know how to open this URL: ${mapUrl}` });
+        console.error(`Don't know how to open this URL: ${mapUrl}`);
+      }
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to open map' });
+      console.error('Failed to open map:', error);
+    }
+  };
 
   return (
     <>
       <Stack.Screen
         options={{
           title: adventure.title,
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.text,
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+          headerTintColor: '#FFFFFF',
           headerShadowVisible: false,
         }}
       />
 
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ArrowLeft size={24} color={Colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.saveButton, isSaved && styles.savedButton]}
-            onPress={handleSaveToggle}
-          >
-            <Bookmark
-              size={24}
-              color={isSaved ? Colors.primary : Colors.text}
-              fill={isSaved ? Colors.primary : "transparent"}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 1, backgroundColor: Colors.border, width: "100%" }} />
+        {/* Removed old header View */}
+        {/* Removed separator line View */}
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
-
+            {/* Add a paddingTop to content to account for transparent header */}
+            <View style={{ paddingTop: Constants.statusBarHeight + 56 }} /> 
             {adventure.imageUrl && (
-              <Image
-                source={{ uri: adventure.imageUrl }}
-                style={{
-                  width: "100%",
-                  height: 400,
-                  alignSelf: "center",
-                  borderRadius: 12,
-                  marginBottom: 16,
-                  backgroundColor: Colors.cardBackground,
-                }}
-                resizeMode="contain"
-              />
+              <View style={styles.heroImageContainer}>
+                <Image
+                  source={{ uri: adventure.imageUrl }}
+                  style={styles.heroImageActual}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.4)']}
+                  style={styles.fadeOverlay}
+                />
+              </View>
             )}
-
 
             <Text style={[styles.title, { fontSize: 26, textTransform: "capitalize" }]}>
               {adventure.title}
@@ -211,11 +230,8 @@ const handleBookNow = () => {
 
             </View>
 
-            <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: 24 }} />
-            <View style={styles.priceContainer}>
-              <Text style={styles.priceLabel}>Price</Text>
-              <Text style={styles.price}>${adventure.price}</Text>
-            </View>
+            <View style={styles.sectionDivider} />
+            {/* Price container removed from here */}
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Description</Text>
@@ -223,27 +239,54 @@ const handleBookNow = () => {
             </View>
 
             {adventure.details && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Details</Text>
+              <>
+                <View style={styles.sectionDivider} />
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Details</Text>
                 <Text style={styles.detailText}>
                   {Array.isArray(adventure.details)
                     ? adventure.details.join(", ")
                     : adventure.details}
                 </Text>
               </View>
-            )}
+            </>
+          )}
+
+            {/* New Location Section */}
+            <View style={styles.sectionDivider} />
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Location</Text>
+              <Text style={styles.locationText}>{adventure.location}</Text>
+              <TouchableOpacity style={styles.viewMapButton} onPress={handleViewMap}>
+                <Text style={styles.viewMapButtonText}>View on Map</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
-          <View>
-            <Text style={styles.footerPriceLabel}>Total Price</Text>
-            <Text style={styles.footerPrice}>${adventure.price}</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.floatingSaveButton}
+          onPress={handleSaveToggle}
+        >
+          <Bookmark
+            size={26} 
+            color={isSaved ? Colors.primary : Colors.text} 
+            fill={isSaved ? Colors.primary : "transparent"}
+          />
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
-            <Text style={styles.bookButtonText}>Book Now</Text>
-          </TouchableOpacity>
+        <View style={styles.footer}>
+          <View style={styles.pricePill}>
+            <Text style={styles.pricePillText}>Starting at ${adventure.price}</Text>
+          </View>
+          <View style={styles.footerActionsRight}>
+            <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
+              <Share2 size={24} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
+              <Text style={styles.bookButtonText}>Book Now</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </>
@@ -256,26 +299,6 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
-  },
-  saveButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
-  },
-  savedButton: {
-    backgroundColor: Colors.iconBackground,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -286,6 +309,27 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
   },
   content: {
     padding: 16,
+  },
+  heroImageContainer: {
+    width: "100%",
+    height: 400,
+    alignSelf: "center",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+    backgroundColor: Colors.cardBackground,
+  },
+  heroImageActual: {
+    width: "100%",
+    height: "100%",
+  },
+  fadeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
   },
   title: {
     fontSize: 24,
@@ -303,29 +347,20 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     alignItems: "center",
     marginRight: 16,
     marginBottom: 8,
+    backgroundColor: Colors.cardBackground,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   infoText: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginLeft: 4,
+    marginLeft: 8,
   },
-  priceContainer: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  priceLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  price: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.text,
+  sectionDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: 24,
   },
   section: {
     marginBottom: 24,
@@ -338,13 +373,67 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
   },
   description: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 28,
     color: Colors.textSecondary,
+    textAlign: 'justify',
+  },
+  floatingSaveButton: {
+    position: 'absolute',
+    top: Constants.statusBarHeight + 12,
+    right: 20,
+    backgroundColor: Colors.cardBackground, 
+    padding: 10,
+    borderRadius: 28, 
+    elevation: 6, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4.5,
+    zIndex: 1, 
   },
   detailText: {
     fontSize: 16,
+    lineHeight: 28,
+    color: Colors.textSecondary,
+  },
+  locationText: {
+    fontSize: 16,
     lineHeight: 24,
     color: Colors.textSecondary,
+    marginBottom: 16,
+  },
+  viewMapButton: {
+    borderColor: Colors.primary,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewMapButtonText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pricePill: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  pricePillText: {
+    color: Colors.text, 
+    fontSize: 18, 
+    fontWeight: 'bold',
+  },
+  footerActionsRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    padding: 8,
+    marginRight: 8,
   },
   footer: {
     flexDirection: "row",
@@ -355,15 +444,7 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     borderTopColor: Colors.border,
     backgroundColor: Colors.background,
   },
-  footerPriceLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  footerPrice: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.text,
-  },
+  // footerPriceLabel, footerPrice styles removed
   bookButton: {
     backgroundColor: Colors.primary,
     paddingVertical: 12,
@@ -371,7 +452,7 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     borderRadius: 12,
   },
   bookButtonText: {
-    color: "#fff",
+    color: Colors.text,
     fontSize: 16,
     fontWeight: "600",
   },
