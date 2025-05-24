@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  Share
+  Share // Added Share
 } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import { MapPin, Calendar, Clock, Bookmark, Share2 } from "lucide-react-native"; // Added Share2
@@ -24,11 +24,14 @@ import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
 import type { Adventure } from "@/types/adventure";
 import Toast from "react-native-toast-message";
+// Removed useNavigation
 
 export default function AdventureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  // Removed router
   const Colors = useColors();
   const styles = createStyles(Colors);
+  // Removed navigation
   const { addRecentSearch } = useSearchStore();
   
   const { savedTrips, addTrip, removeTrip } = useSavedTripsStore();
@@ -41,7 +44,7 @@ export default function AdventureDetailScreen() {
   useEffect(() => {
     const fetchAdventure = async () => {
       try {
-        const res = await fetch(`${baseUrl}/adventure/${id}`); 
+        const res = await fetch(`${baseUrl}/adventure/${id}`); // ✅ Updated
         const json = await res.json();
         console.log("Loaded adventure:", json.adventure);
         setAdventure(json.adventure || null);
@@ -52,7 +55,7 @@ export default function AdventureDetailScreen() {
     };
 
     fetchAdventure();
-  }, [id]);
+  }, [id, baseUrl]);
 
   const isSaved = savedTrips.some((trip) => trip.id === id);
 
@@ -80,6 +83,7 @@ export default function AdventureDetailScreen() {
       timeZone: "UTC",
     }).format(new Date(isoDate));
 
+  // Removed handleBack
 
   if (!adventure) {
     return (
@@ -124,33 +128,7 @@ const handleBookNow = () => {
     }
   };
 
-  const handleViewMap = async () => {
-    if (!adventure || !adventure.location) return;
-
-    const encodedLocation = encodeURIComponent(adventure.location);
-    let mapUrl = '';
-
-    if (Platform.OS === 'ios') {
-      mapUrl = `maps:?q=${encodedLocation}`;
-    } else if (Platform.OS === 'android') {
-      mapUrl = `geo:0,0?q=${encodedLocation}`;
-    } else {
-      mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-    }
-
-    try {
-      const supported = await Linking.canOpenURL(mapUrl);
-      if (supported) {
-        await Linking.openURL(mapUrl);
-      } else {
-        Toast.show({ type: 'error', text1: `Don't know how to open this URL: ${mapUrl}` });
-        console.error(`Don't know how to open this URL: ${mapUrl}`);
-      }
-    } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Failed to open map' });
-      console.error('Failed to open map:', error);
-    }
-  };
+  // handleViewMap function removed
 
   return (
     <>
@@ -253,13 +231,34 @@ const handleBookNow = () => {
           )}
 
             {/* New Location Section */}
-            <View style={styles.sectionDivider} />
+            <View style={styles.sectionDivider} />  
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Location</Text>
-              <Text style={styles.locationText}>{adventure.location}</Text>
-              <TouchableOpacity style={styles.viewMapButton} onPress={handleViewMap}>
-                <Text style={styles.viewMapButtonText}>View on Map</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                <MapPin size={18} color={Colors.primary} />
+                <Text style={styles.sectionTitle}>Location</Text>
+              </View>
+
+              {adventure?.address ? (
+                <Text style={styles.locationText}>{adventure.address}</Text>
+              ) : (
+                <Text style={styles.fallbackText}>Location address not available</Text>
+              )}
+              {adventure?.latitude != null && adventure?.longitude != null ? (
+                <View style={styles.mapContainer}>
+                  <iframe
+                    title="Map"
+                    width="100%"
+                    height="300"
+                    style={{ border: 0, borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.08)" }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${adventure.latitude},${adventure.longitude}&hl=en&z=14&output=embed`}
+                  />
+                </View>
+              ) : (
+                <Text style={styles.fallbackText}>Map preview unavailable</Text>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -277,7 +276,7 @@ const handleBookNow = () => {
 
         <View style={styles.footer}>
           <View style={styles.pricePill}>
-            <Text style={styles.pricePillText}>Starting at ${adventure.price}</Text>
+            <Text style={styles.pricePillText}>${adventure.price}</Text>
           </View>
           <View style={styles.footerActionsRight}>
             <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
@@ -299,6 +298,7 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     flex: 1,
     backgroundColor: Colors.background,
   },
+  // Removed header, backButton, saveButton, savedButton styles
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -357,6 +357,7 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     color: Colors.textSecondary,
     marginLeft: 8,
   },
+  // priceContainer, priceLabel, price styles removed
   sectionDivider: {
     height: 1,
     backgroundColor: Colors.border,
@@ -397,10 +398,9 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     color: Colors.textSecondary,
   },
   locationText: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   viewMapButton: {
     borderColor: Colors.primary,
@@ -455,5 +455,21 @@ const createStyles = (Colors: ReturnType<typeof useColors>) =>
     color: Colors.text,
     fontSize: 16,
     fontWeight: "600",
+  },
+  mapContainer: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  fallbackText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    marginTop: 8,
   },
 });
