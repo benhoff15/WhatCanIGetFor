@@ -13,12 +13,12 @@ loginRoute.post('/', async (c) => {
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user) {
-      return c.json({ error: 'User not found' }, 404);
+      return c.json({ error: 'Invalid email or password' }, 401);
     }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return c.json({ error: 'Invalid password' }, 401);
+      return c.json({ error: 'Invalid email or password' }, 401);
     }
 
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {

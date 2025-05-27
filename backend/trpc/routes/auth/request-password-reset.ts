@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-// import { sendPasswordResetEmail } from '@/utils/mailer'; 
+import { sendPasswordResetEmail } from '../../../utils/mailer';
 
 const requestPasswordResetRoute = new Hono();
 const prisma = new PrismaClient();
@@ -17,17 +17,27 @@ requestPasswordResetRoute.post('/', async (c) => {
       return c.json({ error: 'Email is required' }, 400);
     }
 
+    const normalizedEmail = email.toLowerCase();
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
-      console.log(`Password reset requested for non-existent user: ${email}`);
+      console.log(`Password reset requested for non-existent user: ${normalizedEmail}`);
       return c.json({ message: 'If your email is registered, you will receive a password reset link.' });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const tokenExpiry = new Date(Date.now() + TOKEN_EXPIRY_DURATION);
+
+    await prisma.passwordResetToken.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
 
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
@@ -39,9 +49,8 @@ requestPasswordResetRoute.post('/', async (c) => {
       },
     });
 
-    const resetLink = `http://localhost:8081/auth/reset-password?token=${resetToken}`; // Adjust frontend URL as needed
-    console.log(`Password reset link for ${email}: ${resetLink}`); 
-    // await sendPasswordResetEmail(user.email, resetLink); // Example of actual email sending
+    const resetLink = `http://localhost:8081/auth/reset-password?token=${resetToken}`;
+    await sendPasswordResetEmail(user.email, resetLink);
 
     return c.json({ message: 'If your email is registered, you will receive a password reset link.' });
 
