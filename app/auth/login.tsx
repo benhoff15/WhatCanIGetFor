@@ -5,13 +5,15 @@ import AuthForm from "@/components/AuthForm";
 import { useColors } from "@/constants/colors";
 import { saveToken } from "@/utils/secureStore";
 import Toast from "react-native-toast-message";
+import Constants from "expo-constants";
 
 type AuthData = {
   email: string;
   password: string;
 };
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
+
+const API_URL = Constants?.expoConfig?.extra?.RORK_API_BASE_URL || "http://localhost:8080";
 
 
 export default function LoginScreen() {

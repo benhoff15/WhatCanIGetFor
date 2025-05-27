@@ -11,8 +11,9 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useColors } from "@/constants/colors";
+import Constants from "expo-constants";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = Constants?.expoConfig?.extra?.RORK_API_BASE_URL || "http://localhost:8080";
 
 export default function ResetPasswordScreen() {
   const Colors = useColors();
