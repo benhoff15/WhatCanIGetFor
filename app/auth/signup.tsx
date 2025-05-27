@@ -46,7 +46,11 @@ export default function SignupScreen() {
           text1: "Signup successful",
           text2: `Welcome, ${email}!`
         });
-        router.replace("/");
+
+        setTimeout(() => {
+          router.replace("/");
+        }, 1000);
+        
       } else {
         Toast.show({
           type: "success",

@@ -11,7 +11,7 @@ loginRoute.post('/', async (c) => {
   try {
     const { email, password } = await c.req.json();
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user) {
       return c.json({ error: 'User not found' }, 404);
     }

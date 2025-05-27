@@ -44,33 +44,35 @@ export default function ForgotPasswordScreen() {
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      const res = await fetch(`${API_URL}/api/auth/request-password-reset`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: email.toLowerCase() }),
+      });
 
-      const lowercasedEmail = email.toLowerCase();
+      const data = await res.json();
 
-      if (lowercasedEmail === "exists@example.com") {
+      if (!res.ok) {
         Toast.show({
-          type: "success",
-          text1: "Check Your Email",
-          text2: "If an account with that email exists, we've sent a password reset link.",
-        });
-        // Optionally navigate back to login or clear form
-        // setEmail("");
-        // router.push('/auth/login');
-      } else if (lowercasedEmail === "error@example.com") {
-         Toast.show({
           type: "error",
           text1: "Request Failed",
-          text2: "Something went wrong. Please try again.",
+          text2: data.error || "Something went wrong. Please try again.",
         });
-      } else {
-         Toast.show({ 
-          type: "success", // Show success for security reasons (don't reveal if email exists)
-          text1: "Check Your Email",
-          text2: "If an account with that email exists, we've sent a password reset link.",
-        });
+        return;
       }
+
+      Toast.show({
+        type: "success",
+        text1: "Check Your Email",
+        text2: data.message || "If an account with that email exists, we've sent a password reset link.",
+      });
+
+      // redirect to login after delay
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 3000);
     } catch (error) {
       console.error("Password Reset Request Error:", error);
       Toast.show({

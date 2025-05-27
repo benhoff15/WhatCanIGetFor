@@ -35,9 +35,6 @@ resetPasswordRoute.post('/', async (c) => {
     if (!validTokenEntry) {
       return c.json({ error: 'Invalid or expired token' }, 400);
     }
-    if (!validTokenEntry) {
-      return c.json({ error: 'Invalid or expired token' }, 400);
-    }
 
     if (new Date() > new Date(validTokenEntry.expiresAt)) {
       await prisma.passwordResetToken.delete({ where: { id: validTokenEntry.id } });

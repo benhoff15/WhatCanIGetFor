@@ -29,6 +29,8 @@ requestPasswordResetRoute.post('/', async (c) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const tokenExpiry = new Date(Date.now() + TOKEN_EXPIRY_DURATION);
 
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+
     await prisma.passwordResetToken.create({
       data: {
         userId: user.id,

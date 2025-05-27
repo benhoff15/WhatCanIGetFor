@@ -83,28 +83,35 @@ export default function ResetPasswordScreen() {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, password }),
+      });
 
-      if (token === "valid-token" && password === confirmPassword && password.length >= 8) {
-        Toast.show({
-          type: "success",
-          text1: "Password Reset Successful",
-          text2: "You can now log in with your new password.",
-        });
-        router.replace("/auth/login");
-      } else if (token === "invalid-token") {
+      const data = await res.json();
+
+      if (!res.ok) {
         Toast.show({
           type: "error",
           text1: "Reset Failed",
-          text2: "Invalid or expired token. Please request a new link.",
+          text2: data.error || "Invalid or expired token. Please request a new link.",
         });
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Reset Failed",
-          text2: "Could not reset password. Please try again or request a new link.",
-        });
+        return;
       }
+      
+      Toast.show({
+        type: "success",
+        text1: "Password Reset Successful",
+        text2: "You can now log in with your new password.",
+      });
+
+      setTimeout(() => {
+        router.replace("/auth/login");
+        }, 1500);
+
     } catch (error) {
       console.error("Password Reset Error:", error);
       Toast.show({

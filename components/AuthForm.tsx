@@ -47,6 +47,7 @@ export default function AuthForm({ title, buttonLabel, onSubmit, isLoading }: Au
   };
 
   const handleSubmit = () => {
+    if (isLoading) return;
     if (validateForm()) {
       onSubmit({ email, password });
     }
