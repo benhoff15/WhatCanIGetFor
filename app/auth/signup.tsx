@@ -1,5 +1,5 @@
-import React from "react";
-import { ScrollView, StyleSheet, Alert, TouchableOpacity, Text } from "react-native";
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { useRouter } from "expo-router";
 import AuthForm from "@/components/AuthForm";
 import { useColors } from "@/constants/colors";
@@ -11,13 +11,15 @@ type AuthData = {
   password: string;
 };
 
-const API_URL = "http://localhost:8080";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
 
 export default function SignupScreen() {
   const Colors = useColors();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async ({ email, password }: AuthData) => {
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
@@ -59,15 +61,17 @@ export default function SignupScreen() {
         text1: "Network error",
         text2: "Please try again later.",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: Colors.background }]}>
-      <AuthForm title="Create Account" buttonLabel="Sign Up" onSubmit={handleSignup} />
+      <AuthForm title="Create Account" buttonLabel="Sign Up" onSubmit={handleSignup} isLoading={isLoading} />
       <TouchableOpacity onPress={() => router.push("/auth/login")}>
         <Text style={[styles.linkText, { color: Colors.primary }]}>
-          Already have an account? Log in
+          Already have an account? Log In
         </Text>
       </TouchableOpacity>
     </ScrollView>

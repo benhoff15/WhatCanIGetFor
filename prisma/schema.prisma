@@ -31,4 +31,17 @@ model User {
   email     String   @unique
   password  String   // hashed
   createdAt DateTime @default(now())
+
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id           String   @id @default(cuid())
+  hashedToken  String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
 }

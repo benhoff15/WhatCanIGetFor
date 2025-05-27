@@ -8,6 +8,8 @@ import { createContext } from "./create-context";
 import { prisma } from "@/lib/prisma";
 import { signupRoute } from "./routes/auth/signup";
 import { loginRoute } from "./routes/auth/login";
+import { requestPasswordResetRoute } from './routes/auth/request-password-reset';
+import { resetPasswordRoute } from './routes/auth/reset-password';
 
 const app = new Hono();
 
@@ -33,7 +35,6 @@ app.get("/adventure/:id", async (c) => {
       return c.json({ error: "Adventure not found" }, 404);
     }
 
-    // Optionally normalize details
     const parsed = {
       ...adventure,
       details: typeof adventure.details === "string"
@@ -50,6 +51,8 @@ app.get("/adventure/:id", async (c) => {
 
 app.route("/api/auth/signup", signupRoute);
 app.route("/api/auth/login", loginRoute);
+app.route("/api/auth/request-password-reset", requestPasswordResetRoute);
+app.route("/api/auth/reset-password", resetPasswordRoute);
 
 serve({
   fetch: app.fetch,
