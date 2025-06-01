@@ -15,4 +15,5 @@ export interface Adventure {
   imageUrl?: string;
   timeOfDay?: string | null;
   groupSize?: string | null; 
+  notes?: string;
 }

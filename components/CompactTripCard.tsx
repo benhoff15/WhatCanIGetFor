@@ -10,6 +10,7 @@ import {
   Utensils,
   Compass,
   Image as ImageIcon, 
+  MessageSquare,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -85,8 +86,11 @@ const CompactTripCard = (props: CompactTripCardProps) => {
               {item.title}
             </Text>
             <View style={styles(Colors).subtitleRow}>
-              {getTripTypeIcon(item.type, { size: 14, color: Colors.textSecondary, style: { marginRight: 4 } })}
+              {getTripTypeIcon(item.type, { size: 14, color: Colors.textSecondary, style: styles(Colors).iconInRow })}
               <Text style={styles(Colors).priceText}>${item.price}</Text>
+              {item.notes && item.notes.trim() !== '' && (
+                <MessageSquare size={14} color={Colors.textSecondary} style={styles(Colors).notesIconInRow} />
+              )}
             </View>
           </View>
 
@@ -200,6 +204,13 @@ const styles = (Colors: any) => StyleSheet.create({
   actionButton: {
     padding: 6,
     marginLeft: 4,
+  },
+  iconInRow: {
+    marginRight: 4,
+  },
+  notesIconInRow: {
+    marginLeft: 6,
+    opacity: 0.7,
   }
 });
 

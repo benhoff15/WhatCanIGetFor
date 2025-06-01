@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated } from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import {
@@ -16,19 +16,21 @@ import {
   Users,
   List,
   LayoutGrid,
+  MessageSquare,
 } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
 import { Platform } from "react-native";
 
 import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
+import type { Adventure } from "@/types/adventure";
 import EmptyState from "@/components/EmptyState";
 import CompactTripCard from "@/components/CompactTripCard";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface SavedTripCardProps {
-  item: any;
+  item: Adventure;
   componentStyles: any;
   Colors: any;
   onPressTrip: (id: string) => void;
@@ -55,6 +57,16 @@ const SavedTripCard = (props: SavedTripCardProps) => {
   const heartScaleAnim = React.useRef(new Animated.Value(1)).current;
   const [isFavorited, setIsFavorited] = React.useState(false);
   const [isCardHovered, setIsCardHovered] = React.useState(false);
+  const [isNotesVisible, setIsNotesVisible] = React.useState(false);
+  const [currentNotes, setCurrentNotes] = React.useState(item.notes || '');
+
+  const { updateTripNotes } = useSavedTripsStore();
+
+  React.useEffect(() => {
+    if (isNotesVisible) {
+      setCurrentNotes(item.notes || '');
+    }
+  }, [isNotesVisible, item.notes]);
 
   const handleMouseEnter = () => {
     if (Platform.OS === 'web') {
@@ -233,6 +245,62 @@ const SavedTripCard = (props: SavedTripCardProps) => {
               </View>
             </View>
 
+            <TouchableOpacity
+              style={componentStyles.notesToggleButton}
+              onPress={() => {
+                const newVisibility = !isNotesVisible;
+                setIsNotesVisible(newVisibility);
+                if (!newVisibility) {
+                  setCurrentNotes(item.notes || '');
+                }
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <MessageSquare size={18} color={Colors.textSecondary} />
+              <Text style={componentStyles.notesToggleButtonText}>
+                {isNotesVisible ? "Hide Notes" : (item.notes ? "View/Edit Note" : "Add Note")}
+              </Text>
+            </TouchableOpacity>
+
+            {isNotesVisible && (
+              <View style={componentStyles.notesInputContainer}>
+                <TextInput
+                  style={componentStyles.notesInput}
+                  multiline
+                  placeholder="Type your notes here..."
+                  placeholderTextColor={Colors.textSecondary}
+                  value={currentNotes}
+                  onChangeText={setCurrentNotes}
+                  textAlignVertical="top"
+                />
+                <View style={componentStyles.notesActionsContainer}>
+                  <TouchableOpacity
+                    style={[componentStyles.noteActionButton, componentStyles.cancelNoteButton]} 
+                    onPress={() => {
+                      setCurrentNotes(item.notes || '');
+                      setIsNotesVisible(false);
+                    }}
+                  >
+                    <Text style={[componentStyles.noteActionButtonText, componentStyles.cancelNoteButtonText]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[componentStyles.noteActionButton, componentStyles.saveNoteButton]}
+                    onPress={() => {
+                      updateTripNotes(item.id, currentNotes);
+                      setIsNotesVisible(false);
+                      Toast.show({
+                        type: 'success',
+                        text1: 'Note Saved!',
+                        visibilityTime: 2000,
+                      });
+                    }}
+                  >
+                    <Text style={[componentStyles.noteActionButtonText, componentStyles.saveNoteButtonText]}>Save Note</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             <View style={componentStyles.priceActionsContainer}>
               <Text style={componentStyles.cardPrice}>${item.price}</Text>
               <View style={componentStyles.cardActions}>
@@ -285,8 +353,9 @@ export default function SavedScreen() {
   const Colors = useColors();
   const componentStyles = styles(Colors);
   const router = useRouter();
-  const { savedTrips, removeTrip, addTrip } = useSavedTripsStore();
-  const [lastRemovedTrip, setLastRemovedTrip] = React.useState<any | null>(null);
+  const { removeTrip, addTrip, getSortedSavedTrips } = useSavedTripsStore();
+  const sortedTrips = getSortedSavedTrips(); 
+  const [lastRemovedTrip, setLastRemovedTrip] = React.useState<Adventure | null>(null);
   const [isCompactMode, setIsCompactMode] = React.useState(false);
 
   const headerOpacity = React.useRef(new Animated.Value(0)).current;
@@ -359,7 +428,7 @@ export default function SavedScreen() {
   };
 
   const handleRemove = (id: string) => {
-    const tripToRemove = savedTrips.find(trip => trip.id === id);
+    const tripToRemove = sortedTrips.find((trip: Adventure) => trip.id === id);
     if (tripToRemove) {
       setLastRemovedTrip(tripToRemove);
       removeTrip(id);
@@ -387,12 +456,38 @@ export default function SavedScreen() {
       timeZone: "UTC",
       }).format(new Date(isoDate));
 
+  type ListItem = Adventure | { type: 'header'; title: string; id: string };
+
+  const groupAdventuresByDate = (adventures: Adventure[]): ListItem[] => {
+    if (!adventures || adventures.length === 0) {
+      return [];
+    }
+
+    const grouped: ListItem[] = [];
+    let currentDate: string | null | undefined = null;
+    
+    adventures.forEach((adventure) => {
+      const adventureDate = adventure.date ? formatUTCDate(adventure.date) : "No Date";
+      if (adventureDate !== currentDate) {
+        currentDate = adventureDate;
+        grouped.push({
+          type: 'header',
+          title: currentDate,
+          id: `header-${currentDate}`,
+        });
+      }
+      grouped.push(adventure);
+    });
+    return grouped;
+  };
+
+  const displayData = groupAdventuresByDate(sortedTrips);
       
   const handleTripPress = (id: string) => {
     router.push(`/trip/${id}`);
   };
 
-  if (savedTrips.length === 0) {
+  if (sortedTrips.length === 0) {
     return (
       <EmptyState
         title="No saved adventures"
@@ -452,14 +547,24 @@ export default function SavedScreen() {
       </View>
 
       <FlatList
-        data={savedTrips}
+        data={displayData}
         keyExtractor={(item) => item.id}
         contentContainerStyle={componentStyles.listContent}
         renderItem={({ item }) => {
+          const adventureItem = item as Adventure;
+          const headerItem = item as { type: 'header'; title: string };
+
+          if (headerItem.type === 'header') {
+            return (
+              <View style={componentStyles.dateHeaderContainer}>
+                <Text style={componentStyles.dateHeaderText}>{headerItem.title}</Text>
+              </View>
+            );
+          }
           if (isCompactMode) {
             return (
               <CompactTripCard
-                item={item}
+                item={adventureItem}
                 Colors={Colors}
                 onPressTrip={handleTripPress}
                 onRemoveTrip={handleRemove}
@@ -470,7 +575,7 @@ export default function SavedScreen() {
           } else {
             return (
               <SavedTripCard
-                item={item}
+                item={adventureItem}
                 componentStyles={componentStyles}
                 Colors={Colors}
                 onPressTrip={handleTripPress}
@@ -488,6 +593,19 @@ export default function SavedScreen() {
 }
 
 const styles = (Colors: any) => StyleSheet.create({ 
+  dateHeaderContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginTop: 16,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.uiAccent,
+  },
+  dateHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
   container: {
     flex: 1,
   },
@@ -678,4 +796,59 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  notesToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  notesToggleButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  notesInputContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  notesInput: {
+    height: 100,
+    borderColor: Colors.uiAccent,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: Colors.text,
+    backgroundColor: Colors.inputBackground,
+    marginBottom: 8, 
+  },
+  notesActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  noteActionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  saveNoteButton: {
+    backgroundColor: Colors.primary,
+  },
+  cancelNoteButton: {
+    backgroundColor: Colors.iconBackground,
+  },
+  noteActionButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  saveNoteButtonText: {
+    color: '#fff',
+  },
+  cancelNoteButtonText: {
+    color: Colors.textSecondary,
+  }
 });
