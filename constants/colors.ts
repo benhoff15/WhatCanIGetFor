@@ -23,6 +23,7 @@ export const LightColors = {
   foodTagBackground: "#FDEBD0",
   hotelTagBackground: "#D6EFED",
   flightTagBackground: "#D6EAF8",
+  white: "#FFFFFF",
 };
 
 export const DarkColors = {
@@ -48,6 +49,7 @@ export const DarkColors = {
   foodTagBackground: "#5B4431",
   hotelTagBackground: "#325E5C",
   flightTagBackground: "#2E4D67",
+  white: "#FFFFFF"
 };
 
 export const useColors = () => {
