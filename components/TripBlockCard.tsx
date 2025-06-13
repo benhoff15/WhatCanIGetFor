@@ -1,11 +1,29 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MapPin, Calendar, Clock, Trash2, Plus, MessageSquare } from 'lucide-react-native';
+import { MapPin, Calendar, Clock, Trash2, Plus, MessageSquare, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import L from 'leaflet';
 
 import type { Adventure, TripBlock } from '@/types/adventure';
 import CompactTripCard from './CompactTripCard';
+
+let MapContainer: any, TileLayer: any, Marker: any, Popup: any;
+if (typeof window !== 'undefined' && Platform.OS === 'web') {
+  ({ MapContainer, TileLayer, Marker, Popup } = require('react-leaflet'));
+  require('leaflet/dist/leaflet.css');
+}
+
+// Custom Leaflet pinpoint icon
+const pinIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 interface TripBlockCardProps {
   tripBlock: TripBlock;
@@ -40,6 +58,7 @@ const TripBlockCard = (props: TripBlockCardProps) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [isNotesVisible, setIsNotesVisible] = React.useState(false);
   const [currentNotes, setCurrentNotes] = React.useState(tripBlock.notes || '');
+  const [isMapView, setIsMapView] = React.useState(false);
 
   React.useEffect(() => {
     if (isNotesVisible) {
@@ -85,6 +104,20 @@ const TripBlockCard = (props: TripBlockCardProps) => {
     return groups;
   }, [tripBlock.adventures, formatUTCDate]);
 
+  // Collect valid adventures with coordinates
+  const validAdventures = tripBlock.adventures.filter(
+    adv => typeof adv.latitude === 'number' && typeof adv.longitude === 'number'
+  );
+  // Calculate average center
+  const avgLat = validAdventures.length > 0 ? validAdventures.reduce((sum, adv) => {
+    const { latitude } = adv;
+    return sum + (typeof latitude === 'number' ? latitude : 0);
+  }, 0) / validAdventures.length : null;
+  const avgLng = validAdventures.length > 0 ? validAdventures.reduce((sum, adv) => {
+    const { longitude } = adv;
+    return sum + (typeof longitude === 'number' ? longitude : 0);
+  }, 0) / validAdventures.length : null;
+
   return (
     <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
       <TouchableOpacity
@@ -116,6 +149,28 @@ const TripBlockCard = (props: TripBlockCardProps) => {
           </View>
         </View>
         <View style={styles.headerActions}>
+          {isExpanded && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={e => {
+                e.stopPropagation();
+                setIsMapView(v => !v);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              {isMapView ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <ListIcon size={18} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+                  <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>View List</Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <MapIcon size={18} color={Colors.textSecondary} style={{ marginRight: 6 }} />
+                  <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>View Map</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => {
@@ -175,20 +230,60 @@ const TripBlockCard = (props: TripBlockCardProps) => {
         </View>
       )}
 
-      {isExpanded && (
-        <View style={[styles.content, { backgroundColor: Colors.cardBackground }]}>
+      {isExpanded && isMapView && (
+        <View style={[styles.content, { backgroundColor: Colors.cardBackground }]}>  
+          {validAdventures.length === 0 ? (
+            <View style={{ height: 300, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>
+                No adventures with valid locations to display on the map.
+              </Text>
+            </View>
+          ) : Platform.OS === 'web' && MapContainer ? (
+            <div style={{ width: '100%', height: 500, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+              <MapContainer
+                center={[avgLat, avgLng]}
+                zoom={13}
+                style={{ width: '100%', height: 500, borderRadius: 12 }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {validAdventures.map((a) => (
+                  <Marker key={a.id} position={[a.latitude, a.longitude]} icon={pinIcon}>
+                    <Popup>
+                      <div>
+                        <strong>{a.title}</strong><br />
+                        {a.date ? formatUTCDate(a.date) : ''}<br />
+                        {a.timeOfDay ? (a.timeOfDay.charAt(0).toUpperCase() + a.timeOfDay.slice(1)) : ''}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          ) : (
+            <View style={{ height: 300, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>
+                Map view is only available on web.
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {isExpanded && !isMapView && (
+        <View style={[styles.content, { backgroundColor: Colors.cardBackground }]}>  
           {Object.entries(groupedAdventures).map(([date, timeGroups]) => (
             <View key={date} style={styles.dayGroup}>
               <Text style={[styles.dateHeader, { color: Colors.text }]}>{date}</Text>
-              
               {['morning', 'afternoon', 'evening'].map((timeOfDay) => (
                 timeGroups[timeOfDay].length > 0 && (
                   <View key={timeOfDay} style={styles.timeGroup}>
                     <View style={styles.timeHeader}>
                       <Clock size={16} color={Colors.textSecondary} />
-                      <Text style={[styles.timeHeaderText, { color: Colors.textSecondary }]}>
-                        {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}
-                      </Text>
+                      <Text style={[styles.timeHeaderText, { color: Colors.textSecondary }]}> {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)} </Text>
                     </View>
                     {timeGroups[timeOfDay].map((adventure) => (
                       <CompactTripCard
@@ -206,7 +301,6 @@ const TripBlockCard = (props: TripBlockCardProps) => {
               ))}
             </View>
           ))}
-
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: Colors.primary }]}
             onPress={() => onAddAdventure(tripBlock.id)}
