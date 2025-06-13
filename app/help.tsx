@@ -33,7 +33,6 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children }) => {
   const heightAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const rotationAnim = useRef(new Animated.Value(0)).current;
-  
 
   const toggleOpen = () => {
     const newIsOpen = !isOpen;
@@ -83,13 +82,9 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children }) => {
         </Animated.View>
       </TouchableOpacity>
       <Animated.View style={animatedContentStyle}>
-        <View
-          style={styles.accordionContentInner}
-          onLayout={(event) => {
-            if (!contentHeight) {
-              setContentHeight(event.nativeEvent.layout.height);
-            }
-          }}
+        <View 
+          style={styles.accordionContentInner} 
+          onLayout={(event) => !contentHeight ? setContentHeight(event.nativeEvent.layout.height) : null }
         >
           {children}
         </View>
@@ -102,7 +97,6 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children }) => {
 export default function HelpScreen() {
   const Colors = useColors();
   const navigation = useNavigation();
-  const router = useRouter();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -111,8 +105,11 @@ export default function HelpScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showSuccessIcon, setShowSuccessIcon] = useState(false); 
+  const router = useRouter();
 
-  const contactMutation = trpc.contact.submit.useMutation();
+  const mutation = trpc.contact.submit.useMutation();
+  const { mutateAsync, isPending } = mutation;
+  const isLoading = isPending;
   const scaleAnim = useRef(new Animated.Value(1)).current; // For button press
   const fadeAnim = useRef(new Animated.Value(0)).current;  // For card mount
   const slideAnim = useRef(new Animated.Value(20)).current; // For card mount
@@ -154,11 +151,11 @@ export default function HelpScreen() {
   };
 
   const handleSubmit = async () => {
-    if (showSuccessIcon || contactMutation.isLoading) return; 
+    if (showSuccessIcon || isLoading) return; 
 
     if (validateForm()) {
       try {
-        const result = await contactMutation.mutateAsync({
+        const result = await mutateAsync({
           name: name || undefined, email, subject, message,
         });
         if (result.success) {
@@ -182,11 +179,11 @@ export default function HelpScreen() {
   };
 
   const handlePressIn = () => {
-    if (showSuccessIcon || contactMutation.isLoading) return; 
+    if (showSuccessIcon || isLoading) return; 
     Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true, friction: 7, tension: 100 }).start();
   }
   const handlePressOut = () => {
-    if (showSuccessIcon || contactMutation.isLoading) return;
+    if (showSuccessIcon || isLoading) return;
     Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, friction: 7, tension: 40 }).start();
   }
 
@@ -233,7 +230,7 @@ export default function HelpScreen() {
             onChangeText={setName}
             onFocus={() => setFocusedField('name')}
             onBlur={() => setFocusedField(null)}
-            editable={!contactMutation.isLoading && !showSuccessIcon}
+            editable={!isLoading && !showSuccessIcon}
           />
         </View>
 
@@ -250,7 +247,7 @@ export default function HelpScreen() {
             onChangeText={(text) => { setEmail(text); if (errors.email) setErrors(prev => ({ ...prev, email: '' })); }}
             onFocus={() => setFocusedField('email')}
             onBlur={() => setFocusedField(null)}
-            editable={!contactMutation.isLoading && !showSuccessIcon}
+            editable={!isLoading && !showSuccessIcon}
           />
         </View>
         {errors.email && (<Text style={[styles.errorText, { color: Colors.error }]}>{errors.email}</Text>)}
@@ -266,7 +263,7 @@ export default function HelpScreen() {
             onChangeText={(text) => { setSubject(text); if (errors.subject) setErrors(prev => ({ ...prev, subject: '' })); }}
             onFocus={() => setFocusedField('subject')}
             onBlur={() => setFocusedField(null)}
-            editable={!contactMutation.isLoading && !showSuccessIcon}
+            editable={!isLoading && !showSuccessIcon}
           />
         </View>
         {errors.subject && (<Text style={[styles.errorText, { color: Colors.error }]}>{errors.subject}</Text>)}
@@ -285,7 +282,7 @@ export default function HelpScreen() {
             onChangeText={(text) => { setMessage(text); if (errors.message) setErrors(prev => ({ ...prev, message: '' })); }}
             onFocus={() => setFocusedField('message')}
             onBlur={() => setFocusedField(null)}
-            editable={!contactMutation.isLoading && !showSuccessIcon}
+            editable={!isLoading && !showSuccessIcon}
           />
         </View>
         {errors.message && (<Text style={[styles.errorText, { color: Colors.error }]}>{errors.message}</Text>)}
@@ -295,7 +292,7 @@ export default function HelpScreen() {
         onPress={handleSubmit}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={contactMutation.isLoading || showSuccessIcon}
+        disabled={isLoading || showSuccessIcon}
         activeOpacity={1} 
       >
         <Animated.View 
@@ -308,7 +305,7 @@ export default function HelpScreen() {
             colors={
               showSuccessIcon
                 ? [Colors.success, Colors.success] 
-                : contactMutation.isLoading 
+                : isLoading 
                 ? [Colors.disabled, Colors.disabled] 
                 : [Colors.primary, Colors.secondary] 
             }
@@ -321,7 +318,7 @@ export default function HelpScreen() {
                 <Check color="#FFFFFF" size={20} style={{ marginRight: 8 }}/>
                 <Text style={styles.submitButtonText}>Thank You!</Text>
               </>
-            ) : contactMutation.isLoading ? (
+            ) : isLoading ? (
               <>
                 <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 10 }} />
                 <Text style={styles.submitButtonText}>Sending...</Text>
@@ -354,18 +351,17 @@ export default function HelpScreen() {
       </View>
 
       {/* More Information Section */}
-      <Text style={[styles.sectionTitle, { color: Colors.text }]}>More Information</Text>
       <View style={[styles.linksContainer, { backgroundColor: Colors.cardBackground }]}>
         <TouchableOpacity onPress={() => router.push("/privacy")}>
           <Text style={[styles.linkText, { color: Colors.primary }]}>Privacy Policy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/terms")}>
-            <Text style={[styles.linkText, { color: Colors.primary }]}>Terms of Service</Text>
         </TouchableOpacity>
-      </View>
-      </ScrollView>
-    );
-  }
+      <TouchableOpacity onPress={() => router.push("/terms")}>
+        <Text style={[styles.linkText, { color: Colors.primary }]}>Terms of Service</Text>
+      </TouchableOpacity>
+    </View>
+    </ScrollView>
+  );
+}
 
 const styles = StyleSheet.create({
   scrollViewContent: { padding: 24, paddingBottom: 48 },

@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL;
-const SUPPORT_EMAIL = 'freckles1115@gmail.com'; // Target email for support requests
+const SUPPORT_EMAIL = 'benji.hoffenberg@gmail.com'; // Target email for support requests
 
 const resend = new Resend(RESEND_API_KEY);
 
