@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,8 +23,14 @@ import {
   Clock,
   User,
   Users,
+  Plane,
+  SlidersHorizontal,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
+import { DateRange } from "react-date-range";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 
 import { useColors } from "@/constants/colors";
 import { useSearchStore } from "@/store/searchStore";
@@ -54,6 +61,11 @@ export default function HomeScreen() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
+  const budgetGlowAnim = useRef(new Animated.Value(0)).current;
+  const [isHovered, setIsHovered] = useState(false);
+  const advancedToggleScale = useRef(new Animated.Value(1)).current;
+  const advancedToggleRotate = useRef(new Animated.Value(0)).current;
+  const [isAdvancedHovered, setIsAdvancedHovered] = useState(false);
 
   // Data for filter chips
   const TIME_OF_DAY_OPTIONS = [
@@ -74,6 +86,112 @@ export default function HomeScreen() {
   const advancedFiltersOpacity = React.useRef(new Animated.Value(0)).current;
   const advancedFiltersHeight = React.useRef(new Animated.Value(0)).current;
   const searchButtonScale = React.useRef(new Animated.Value(1)).current; 
+
+  // Animation refs for hero section
+  const logoOpacity = React.useRef(new Animated.Value(0)).current;
+  const titleOpacity = React.useRef(new Animated.Value(0)).current;
+  const subtitleOpacity = React.useRef(new Animated.Value(0)).current;
+  const logoScale = React.useRef(new Animated.Value(0.9)).current;
+  const planePosition = React.useRef(new Animated.Value(0)).current;
+  const cloud1Position = React.useRef(new Animated.Value(0)).current;
+  const cloud2Position = React.useRef(new Animated.Value(0)).current;
+  const cloud3Position = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Animate hero elements on mount
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoScale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(titleOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(subtitleOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Start continuous animations
+    const startContinuousAnimations = () => {
+      // Plane animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(planePosition, {
+            toValue: 1,
+            duration: 20000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(planePosition, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Cloud animations
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(cloud1Position, {
+            toValue: 1,
+            duration: 15000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(cloud1Position, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(cloud2Position, {
+            toValue: 1,
+            duration: 18000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(cloud2Position, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(cloud3Position, {
+            toValue: 1,
+            duration: 12000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(cloud3Position, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    };
+
+    startContinuousAnimations();
+  }, []);
 
   React.useEffect(() => {
     if (showAdvanced) {
@@ -160,6 +278,119 @@ export default function HomeScreen() {
     }).start();
   };
 
+  const handleAdvancedPressIn = () => {
+    Animated.spring(advancedToggleScale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      friction: 7,
+    }).start();
+  };
+
+  const handleAdvancedPressOut = () => {
+    Animated.spring(advancedToggleScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 7,
+    }).start();
+  };
+
+  const handleAdvancedToggle = () => {
+    Animated.parallel([
+      Animated.spring(advancedToggleScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 7,
+      }),
+      Animated.spring(advancedToggleRotate, {
+        toValue: showAdvanced ? 0 : 1,
+        useNativeDriver: true,
+        friction: 7,
+      }),
+    ]).start();
+    setShowAdvanced((prev) => !prev);
+  };
+
+  const renderBudgetField = () => {
+    const commonStyles = [
+      componentStyles.budgetContainer,
+      {
+        backgroundColor: Colors.iconBackground,
+        borderColor: isFocused ? Colors.primary : "rgba(255, 255, 255, 0.3)",
+        shadowOpacity: isFocused ? 0.15 : 0.08,
+        transform: [
+          { scale: isFocused ? 1.03 : 1.0 },
+          { scale: Animated.add(1, Animated.multiply(budgetGlowAnim, 0.03)) }
+        ],
+      },
+    ];
+
+    if (Platform.OS === 'web') {
+      return (
+        <Pressable
+          style={commonStyles}
+          onHoverIn={() => {
+            setIsHovered(true);
+            Animated.spring(budgetGlowAnim, {
+              toValue: 1,
+              friction: 7,
+              useNativeDriver: true,
+            }).start();
+          }}
+          onHoverOut={() => {
+            setIsHovered(false);
+            Animated.spring(budgetGlowAnim, {
+              toValue: 0,
+              friction: 7,
+              useNativeDriver: true,
+            }).start();
+          }}
+        >
+          <Text style={[componentStyles.currencySymbol, { color: Colors.primary }]}>$</Text>
+          <TextInput
+            style={[componentStyles.budgetInput, { color: Colors.text }]}
+            placeholder="Enter your budget"
+            placeholderTextColor={Colors.textSecondary}
+            keyboardType="numeric"
+            value={budget > 0 ? budget.toString() : ""}
+            onChangeText={(text) => setBudget(parseInt(text) || 0)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
+        </Pressable>
+      );
+    }
+
+    return (
+      <Animated.View style={commonStyles}>
+        <Text style={[componentStyles.currencySymbol, { color: Colors.primary }]}>$</Text>
+        <TextInput
+          style={[componentStyles.budgetInput, { color: Colors.text }]}
+          placeholder="Enter your budget"
+          placeholderTextColor={Colors.textSecondary}
+          keyboardType="numeric"
+          value={budget > 0 ? budget.toString() : ""}
+          onChangeText={(text) => setBudget(parseInt(text) || 0)}
+          onFocus={() => {
+            setIsFocused(true);
+            Animated.spring(budgetGlowAnim, {
+              toValue: 1,
+              friction: 7,
+              useNativeDriver: true,
+            }).start();
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            Animated.spring(budgetGlowAnim, {
+              toValue: 0,
+              friction: 7,
+              useNativeDriver: true,
+            }).start();
+          }}
+        />
+      </Animated.View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       style={[componentStyles.container, { backgroundColor: Colors.background }]}
@@ -173,46 +404,113 @@ export default function HomeScreen() {
         {/* Hero Section */}
         <View style={componentStyles.heroSection}>
           <LinearGradient
-            colors={["#00BFFF", "#CCCCFF"]}
+            colors={["rgba(0, 191, 255, 0.8)", "rgba(204, 204, 255, 0.8)"]}
             style={componentStyles.heroGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <View style={componentStyles.floatingShape1} />
-            <View style={componentStyles.floatingShape2} />
-            <View style={componentStyles.floatingShape3} />
-            <Logo size={120} />
-            <Text style={componentStyles.heroTitle}>What can I get for...</Text>
-            <Text style={componentStyles.heroSubtitle}>
+            {/* Animated Plane */}
+            <Animated.View
+              style={[
+                componentStyles.planeContainer,
+                {
+                  transform: [
+                    {
+                      translateX: planePosition.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-50, 350],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Plane size={24} color="rgba(255, 255, 255, 0.8)" />
+            </Animated.View>
+
+            {/* Cloud Overlay */}
+            <View style={componentStyles.cloudOverlay}>
+              <Animated.View
+                style={[
+                  componentStyles.cloud1,
+                  {
+                    transform: [
+                      {
+                        translateX: cloud1Position.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-200, 400],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  componentStyles.cloud2,
+                  {
+                    transform: [
+                      {
+                        translateX: cloud2Position.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [400, -200],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  componentStyles.cloud3,
+                  {
+                    transform: [
+                      {
+                        translateX: cloud3Position.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-150, 350],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Glassmorphism Logo Container */}
+            <Animated.View 
+              style={[
+                componentStyles.logoContainer,
+                {
+                  opacity: logoOpacity,
+                  transform: [{ scale: logoScale }],
+                }
+              ]}
+            >
+              <Logo size={120} />
+            </Animated.View>
+
+            <Animated.Text 
+              style={[
+                componentStyles.heroTitle,
+                { opacity: titleOpacity }
+              ]}
+            >
+              What can I get for...
+            </Animated.Text>
+            <Animated.Text 
+              style={[
+                componentStyles.heroSubtitle,
+                { opacity: subtitleOpacity }
+              ]}
+            >
               Explore unforgettable adventures based on your budget
-            </Text>
+            </Animated.Text>
           </LinearGradient>
         </View>
 
         {/* Budget Field */}
-        <View
-          style={[
-            componentStyles.budgetContainer,
-            {
-              backgroundColor: Colors.iconBackground, 
-              borderColor: isFocused ? Colors.primary : "rgba(255, 255, 255, 0.3)",
-              shadowOpacity: isFocused ? 0.15 : 0.08,
-              transform: [{ scale: isFocused ? 1.03 : 1.0 }],
-            },
-          ]}
-        >
-          <Text style={[componentStyles.currencySymbol, { color: Colors.primary }]}>$</Text>
-          <TextInput
-            style={[componentStyles.budgetInput, { color: Colors.text }]}
-            placeholder="Enter your budget"
-            placeholderTextColor={Colors.textSecondary}
-            keyboardType="numeric"
-            value={budget > 0 ? budget.toString() : ""}
-            onChangeText={(text) => setBudget(parseInt(text) || 0)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-          />
-        </View>
+        {renderBudgetField()}
         <Text style={[componentStyles.tooltipText, { color: Colors.textSecondary }]}>
           Set your budget and unlock your adventure.
         </Text>
@@ -230,175 +528,174 @@ export default function HomeScreen() {
         </View>
 
         {/* Advanced Filters Toggle */}
-        <TouchableOpacity
-          onPress={() => setShowAdvanced((prev) => !prev)}
-          style={componentStyles.advancedSearchToggle}
+        <Pressable
+          onPress={handleAdvancedToggle}
+          onPressIn={handleAdvancedPressIn}
+          onPressOut={handleAdvancedPressOut}
+          onHoverIn={() => setIsAdvancedHovered(true)}
+          onHoverOut={() => setIsAdvancedHovered(false)}
+          style={({ pressed }) => [
+            componentStyles.advancedSearchToggle,
+            isAdvancedHovered && componentStyles.advancedSearchToggleHovered,
+            pressed && componentStyles.advancedSearchTogglePressed,
+          ]}
         >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Animated.View
+            style={[
+              componentStyles.advancedSearchToggleContent,
+              {
+                transform: [
+                  { scale: advancedToggleScale },
+                ],
+              },
+            ]}
+          >
+            <SlidersHorizontal size={20} color={Colors.primary} />
             <Text style={componentStyles.advancedSearchText}>
               {showAdvanced ? "Hide Advanced Search" : "Show Advanced Search"}
             </Text>
-            {showAdvanced ? (
-              <ChevronUp size={18} color={Colors.primary} style={{ marginLeft: 6 }} />
-            ) : (
-              <ChevronDown size={18} color={Colors.primary} style={{ marginLeft: 6 }} />
-            )}
-          </View>
-        </TouchableOpacity>
+            <Animated.View
+              style={{
+                marginLeft: 6,
+                transform: [
+                  {
+                    rotate: advancedToggleRotate.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg'],
+                    }),
+                  },
+                ],
+              }}
+            >
+              {showAdvanced ? (
+                <ChevronUp size={18} color={Colors.primary} />
+              ) : (
+                <ChevronDown size={18} color={Colors.primary} />
+              )}
+            </Animated.View>
+          </Animated.View>
+        </Pressable>
 
         {/* Advanced Filters Container - Animated */}
         {showAdvanced && (
-        <Animated.View
-          style={{
-            opacity: advancedFiltersOpacity,
-            maxHeight: advancedFiltersHeight.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 1000],
-            }),
-            overflow: "hidden",
-            marginTop: 16,
-          }}
-        >
-            <View style={{ gap: 16 }}>
-              {/* Time of Day */}
-              <View>
-                <Text style={[componentStyles.sectionTitle, { color: Colors.text }]}>Time of Day</Text>
-                <View style={componentStyles.chipContainer}>
+          <Animated.View
+            style={{
+              opacity: advancedFiltersOpacity,
+              maxHeight: advancedFiltersHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 1000],
+              }),
+              overflow: "hidden",
+              marginTop: 16,
+            }}
+          >
+            <View style={{ flexDirection: 'row', gap: 40 }}>
+              {/* Time of Day Section */}
+              <View style={{ flex: 1 }}>
+                <Text style={componentStyles.advancedSectionHeadingRefined}>Time of Day</Text>
+                <View style={componentStyles.chipColumnContainer}>
                   {TIME_OF_DAY_OPTIONS.map((option) => {
                     const isSelected = timeOfDay === option.id;
                     const IconComponent = option.icon;
                     return (
                       <TouchableOpacity
                         key={option.id}
-                        onPress={() => setTimeOfDay(isSelected ? null : option.id)}
                         style={[
                           componentStyles.chipButton,
-                          {
-                            backgroundColor: isSelected ? Colors.primary : Colors.iconBackground,
-                            borderColor: isSelected ? Colors.primary : Colors.border,
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: isSelected ? 2 : 1 },
-                            shadowOpacity: isSelected ? 0.12 : 0.05,
-                            shadowRadius: isSelected ? 3 : 2,
-                            elevation: isSelected ? 3 : 1,
-                          },
+                          componentStyles.chipColumnItem,
+                          isSelected && { borderColor: Colors.primary, backgroundColor: Colors.primary + '10' },
                         ]}
+                        onPress={() => setTimeOfDay(isSelected ? null : option.id)}
+                        activeOpacity={0.8}
                       >
-                        <IconComponent
-                          size={16}
-                          color={isSelected ? "#fff" : Colors.textSecondary}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={[componentStyles.chipText, { color: isSelected ? "#fff" : Colors.textSecondary }]}>
-                          {option.label}
-                        </Text>
+                        <IconComponent size={18} color={isSelected ? Colors.primary : Colors.textSecondary} style={{ marginRight: 8 }} />
+                        <Text style={[componentStyles.chipText, isSelected && { color: Colors.primary }]}>{option.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
               </View>
-
-              {/* Group Size */}
-              <View>
-                <Text style={[componentStyles.sectionTitle, { color: Colors.text }]}>Group Size</Text>
-                <View style={componentStyles.chipContainer}>
+              {/* Group Size Section */}
+              <View style={{ flex: 1 }}>
+                <Text style={componentStyles.advancedSectionHeadingRefined}>Group Size</Text>
+                <View style={componentStyles.chipColumnContainer}>
                   {GROUP_SIZE_OPTIONS.map((option) => {
                     const isSelected = groupSize === option.id;
                     const IconComponent = option.icon;
                     return (
                       <TouchableOpacity
                         key={option.id}
-                        onPress={() => setGroupSize(isSelected ? null : option.id)}
                         style={[
                           componentStyles.chipButton,
-                          {
-                            backgroundColor: isSelected ? Colors.primary : Colors.iconBackground,
-                            borderColor: isSelected ? Colors.primary : Colors.border,
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: isSelected ? 2 : 1 },
-                            shadowOpacity: isSelected ? 0.12 : 0.05,
-                            shadowRadius: isSelected ? 3 : 2,
-                            elevation: isSelected ? 3 : 1,
-                          },
+                          componentStyles.chipColumnItem,
+                          isSelected && { borderColor: Colors.primary, backgroundColor: Colors.primary + '10' },
                         ]}
+                        onPress={() => setGroupSize(isSelected ? null : option.id)}
+                        activeOpacity={0.8}
                       >
-                        <IconComponent
-                          size={16}
-                          color={isSelected ? "#fff" : Colors.textSecondary}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={[componentStyles.chipText, { color: isSelected ? "#fff" : Colors.textSecondary }]}>
-                          {option.label}
-                        </Text>
+                        <IconComponent size={18} color={isSelected ? Colors.primary : Colors.textSecondary} style={{ marginRight: 8 }} />
+                        <Text style={[componentStyles.chipText, isSelected && { color: Colors.primary }]}>{option.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
               </View>
-
-              {/* Date Range */}
-            <View>
-              <Text style={[componentStyles.sectionTitle, { color: Colors.text }]}>Date Range: Earliest to Latest</Text>
-
-              <Text style={{ color: Colors.textSecondary, marginBottom: 4 }}>Earliest Date</Text>
-              <TextInput
-                style={{
-                  paddingVertical: 12, 
-                  paddingHorizontal: 16, 
-                  borderRadius: 12, 
-                  backgroundColor: Colors.iconBackground,
-                  color: Colors.text,
-                  borderWidth: 1, 
-                  borderColor: Colors.border, 
-                  marginBottom: 8,
-                }}
-                placeholderTextColor={Colors.textSecondary} 
-                value={startDateInput}
-                onChangeText={(text) => {
-                  setStartDateInput(text);
-                  const isoDateRegex = /^\\d{4}-\\d{2}-\\d{2}$/;
-                  if (isoDateRegex.test(text)) {
-                    const parsed = new Date(text);
-                    if (!isNaN(parsed.getTime())) setStartDate(parsed);
-                  } else {
-                    setStartDate(null);
-                  }
-                }}
-                placeholder="📅 YYYY-MM-DD"
-                inputMode="text"
-                keyboardType="numbers-and-punctuation"
-              />
-
-              <Text style={{ color: Colors.textSecondary, marginBottom: 4 }}>Latest Date</Text>
-              <TextInput
-                style={{
-                  paddingVertical: 12, 
-                  paddingHorizontal: 16, 
-                  borderRadius: 12, 
-                  backgroundColor: Colors.iconBackground,
-                  color: Colors.text,
-                  borderWidth: 1, 
-                  borderColor: Colors.border, 
-                }}
-                placeholderTextColor={Colors.textSecondary} 
-                value={endDateInput}
-                onChangeText={(text) => {
-                  setEndDateInput(text);
-                  const isoDateRegex = /^\\d{4}-\\d{2}-\\d{2}$/;
-                  if (isoDateRegex.test(text)) {
-                    const parsed = new Date(text);
-                    if (!isNaN(parsed.getTime())) setEndDate(parsed);
-                  } else {
-                    setEndDate(null);
-                  }
-                }}
-                placeholder="📅 YYYY-MM-DD"
-                inputMode="text"
-                keyboardType="numbers-and-punctuation"
-              />
             </View>
-          </View>
-        </Animated.View>
+            {/* Date Range Section */}
+            <View style={{ marginTop: 24 }}>
+              <Text style={componentStyles.advancedSectionHeading}>Date Range</Text>
+              {Platform.OS === 'web' ? (
+                <View style={componentStyles.dateCardWeb}>
+                  <Text style={componentStyles.dateLabel}>Earliest Date</Text>
+                  <Text style={componentStyles.dateLabel}>Latest Date</Text>
+                  <DateRange
+                    ranges={[{
+                      startDate: startDate || new Date(),
+                      endDate: endDate || new Date(),
+                      key: 'selection',
+                    }]}
+                    onChange={(ranges: { selection: { startDate: Date; endDate: Date } }) => {
+                      setStartDate(ranges.selection.startDate);
+                      setEndDate(ranges.selection.endDate);
+                    }}
+                    showSelectionPreview={true}
+                    moveRangeOnFirstSelection={false}
+                    months={2}
+                    direction="horizontal"
+                    rangeColors={[Colors.primary]}
+                    editableDateInputs={true}
+                  />
+                </View>
+              ) : (
+                <View style={componentStyles.dateCardMobile}>
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={componentStyles.dateLabel}>Earliest Date</Text>
+                    <DateTimePicker
+                      value={startDate || new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) setStartDate(selectedDate);
+                      }}
+                      style={{ backgroundColor: 'white', borderRadius: 12 }}
+                    />
+                  </View>
+                  <View>
+                    <Text style={componentStyles.dateLabel}>Latest Date</Text>
+                    <DateTimePicker
+                      value={endDate || new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) setEndDate(selectedDate);
+                      }}
+                      style={{ backgroundColor: 'white', borderRadius: 12 }}
+                    />
+                  </View>
+                </View>
+              )}
+            </View>
+          </Animated.View>
         )}
 
         {/* Search Button */}
@@ -505,7 +802,7 @@ const styles = (Colors: any) => StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
@@ -529,13 +826,38 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   advancedSearchToggle: {
     marginTop: 10,
-    alignItems: "center",
-    paddingVertical: 10,
     marginBottom: 4,
+    borderRadius: 16,
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  advancedSearchToggleHovered: {
+    borderColor: Colors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  advancedSearchTogglePressed: {
+    transform: [{ scale: 0.98 }],
+  },
+  advancedSearchToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   advancedSearchText: {
     color: Colors.primary,
-    fontWeight: "600",
+    fontWeight: '600',
     fontSize: 15,
   },
   chipContainer: {
@@ -618,6 +940,63 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  planeContainer: {
+    position: "absolute",
+    top: "30%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  cloudOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: "hidden",
+  },
+  cloud1: {
+    position: "absolute",
+    width: 200,
+    height: 60,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 30,
+    top: "20%",
+    left: 0,
+    transform: [{ rotate: "-5deg" }],
+  },
+  cloud2: {
+    position: "absolute",
+    width: 180,
+    height: 50,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 25,
+    top: "40%",
+    right: 0,
+    transform: [{ rotate: "10deg" }],
+  },
+  cloud3: {
+    position: "absolute",
+    width: 150,
+    height: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 20,
+    bottom: "30%",
+    left: 0,
+    transform: [{ rotate: "-8deg" }],
+  },
+  logoContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 20,
+    padding: 20,
+    backdropFilter: "blur(10px)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   heroTitle: {
     fontSize: 32,
@@ -625,6 +1004,9 @@ const styles = (Colors: any) => StyleSheet.create({
     color: "#ffffff",
     marginTop: 12,
     textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   heroSubtitle: {
     fontSize: 15,
@@ -634,35 +1016,62 @@ const styles = (Colors: any) => StyleSheet.create({
     maxWidth: 320,
     lineHeight: 22,
     opacity: 0.9,
+    textShadowColor: "rgba(0, 0, 0, 0.1)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  floatingShape1: {
-    position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    top: 20,
-    left: 20,
-    transform: [{ rotate: "15deg" }],
+  advancedSectionHeading: {
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    fontSize: 12,
+    letterSpacing: 1.2,
+    marginBottom: 6,
   },
-  floatingShape2: {
-    position: "absolute",
-    width: 150,
-    height: 80,
-    borderRadius: 25,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    bottom: 30,
-    right: 10,
-    transform: [{ rotate: "-10deg" }],
+  advancedSectionHeadingRefined: {
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    fontSize: 13,
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
-  floatingShape3: {
-    position: "absolute",
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-    top: 70,
-    right: 50,
-    transform: [{ rotate: "25deg" }],
+  chipColumnContainer: {
+    flexDirection: 'column',
+    gap: 14,
+  },
+  chipColumnItem: {
+    width: '100%',
+    marginBottom: 0,
+  },
+  dateLabel: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  dateCardWeb: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 16,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+    padding: 18,
+    marginTop: 8,
+    marginBottom: 8,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  dateCardMobile: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 16,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
 });

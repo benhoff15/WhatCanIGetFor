@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   Animated,
+  Pressable,
 } from "react-native";
 import {
   Plane,
@@ -13,6 +14,7 @@ import {
   Utensils,
   MountainSnow,
   Compass,
+  Check,
 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,57 +32,179 @@ const ADVENTURE_TYPES_DATA = [
 export default function AdventureTypeSelector() {
   const Colors = useColors();
   const { adventureType, setAdventureType } = useSearchStore();
-  const [pressedButton, setPressedButton] = useState<string | null>(null);
-  const scaleAnim = new Animated.Value(1);
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  
+  // Animation refs for each button
+  const scaleAnims = useRef(
+    ADVENTURE_TYPES_DATA.map(() => new Animated.Value(1))
+  ).current;
+  const checkmarkOpacities = useRef(
+    ADVENTURE_TYPES_DATA.map(() => new Animated.Value(0))
+  ).current;
+  const glowOpacities = useRef(
+    ADVENTURE_TYPES_DATA.map(() => new Animated.Value(0))
+  ).current;
 
-  const handleSelect = (typeId: string) => {
+  const handleSelect = (typeId: string, index: number) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     setAdventureType(typeId);
 
-    // Animation for press
+    // Animate checkmark
     Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
+      Animated.timing(checkmarkOpacities[index], {
+        toValue: 1,
+        duration: 200,
         useNativeDriver: true,
       }),
-      Animated.timing(scaleAnim, {
+      Animated.timing(checkmarkOpacities[index], {
+        toValue: 0,
+        duration: 200,
+        delay: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Animate glow
+    Animated.sequence([
+      Animated.timing(glowOpacities[index], {
         toValue: 1,
-        duration: 100,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(glowOpacities[index], {
+        toValue: 0.5,
+        duration: 200,
         useNativeDriver: true,
       }),
     ]).start();
   };
 
+  const handlePressIn = (index: number) => {
+    Animated.spring(scaleAnims[index], {
+      toValue: 0.95,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = (index: number) => {
+    Animated.spring(scaleAnims[index], {
+      toValue: 1,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <View style={styles.container}>
-      {ADVENTURE_TYPES_DATA.map((type) => {
+      {ADVENTURE_TYPES_DATA.map((type, index) => {
         const isSelected = adventureType === type.id;
         const IconComponent = type.icon;
 
-        const dynamicStyles = {
-          borderColor: isSelected ? "transparent" : Colors.border,
-          borderWidth: isSelected ? 0 : 1,
-          shadowOpacity: isSelected ? 0.2 : 0.05,
-          shadowRadius: isSelected ? 5 : 3,
-          elevation: isSelected ? 4 : 1,
-          transform: [{ scale: pressedButton === type.id ? scaleAnim : 1 }],
-        };
+        if (Platform.OS === 'web') {
+          return (
+            <Pressable
+              key={type.id}
+              style={styles.buttonWrapper}
+              onPress={() => handleSelect(type.id, index)}
+              onPressIn={() => handlePressIn(index)}
+              onPressOut={() => handlePressOut(index)}
+              onHoverIn={() => setHoveredButton(type.id)}
+              onHoverOut={() => setHoveredButton(null)}
+            >
+              <Animated.View
+                style={[
+                  styles.typeButtonOuter,
+                  {
+                    transform: [{ scale: scaleAnims[index] }],
+                  },
+                ]}
+              >
+                {/* Glow effect */}
+                <Animated.View
+                  style={[
+                    styles.glowEffect,
+                    {
+                      opacity: glowOpacities[index],
+                      backgroundColor: isSelected ? Colors.primary : 'transparent',
+                    },
+                  ]}
+                />
 
-        const textAndIconColor = isSelected ? "#fff" : Colors.text;
+                <LinearGradient
+                  colors={
+                    isSelected
+                      ? [Colors.primary, Colors.secondary]
+                      : [Colors.cardBackground, Colors.cardBackground]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    styles.gradientBackground,
+                    hoveredButton === type.id && !isSelected && styles.hoveredBackground,
+                  ]}
+                >
+                  <View style={styles.buttonContent}>
+                    <IconComponent
+                      color={isSelected ? "#fff" : Colors.text}
+                      size={24}
+                      style={styles.icon}
+                    />
+                    <Text
+                      style={[
+                        styles.typeText,
+                        { color: isSelected ? "#fff" : Colors.text },
+                      ]}
+                    >
+                      {type.name}
+                    </Text>
+                  </View>
+
+                  {/* Checkmark overlay */}
+                  <Animated.View
+                    style={[
+                      styles.checkmarkOverlay,
+                      { opacity: checkmarkOpacities[index] },
+                    ]}
+                  >
+                    <Check size={24} color="#fff" />
+                  </Animated.View>
+                </LinearGradient>
+              </Animated.View>
+            </Pressable>
+          );
+        }
 
         return (
           <TouchableOpacity
             key={type.id}
             style={styles.buttonWrapper}
-            onPress={() => handleSelect(type.id)}
-            onPressIn={() => setPressedButton(type.id)}
-            onPressOut={() => setPressedButton(null)}
+            onPress={() => handleSelect(type.id, index)}
+            onPressIn={() => handlePressIn(index)}
+            onPressOut={() => handlePressOut(index)}
             activeOpacity={0.8}
           >
-            <Animated.View style={[styles.typeButtonOuter, dynamicStyles]}>
+            <Animated.View
+              style={[
+                styles.typeButtonOuter,
+                {
+                  transform: [{ scale: scaleAnims[index] }],
+                },
+              ]}
+            >
+              {/* Glow effect */}
+              <Animated.View
+                style={[
+                  styles.glowEffect,
+                  {
+                    opacity: glowOpacities[index],
+                    backgroundColor: isSelected ? Colors.primary : 'transparent',
+                  },
+                ]}
+              />
+
               <LinearGradient
                 colors={
                   isSelected
@@ -93,14 +217,29 @@ export default function AdventureTypeSelector() {
               >
                 <View style={styles.buttonContent}>
                   <IconComponent
-                    color={textAndIconColor}
-                    size={20}
+                    color={isSelected ? "#fff" : Colors.text}
+                    size={24}
                     style={styles.icon}
                   />
-                  <Text style={[styles.typeText, { color: textAndIconColor }]}>
+                  <Text
+                    style={[
+                      styles.typeText,
+                      { color: isSelected ? "#fff" : Colors.text },
+                    ]}
+                  >
                     {type.name}
                   </Text>
                 </View>
+
+                {/* Checkmark overlay */}
+                <Animated.View
+                  style={[
+                    styles.checkmarkOverlay,
+                    { opacity: checkmarkOpacities[index] },
+                  ]}
+                >
+                  <Check size={24} color="#fff" />
+                </Animated.View>
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -122,27 +261,54 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   typeButtonOuter: {
-    borderRadius: 24,
+    borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-  },
-  gradientBackground: {
-    borderRadius: 24,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     overflow: 'hidden',
   },
+  glowEffect: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    right: -2,
+    bottom: -2,
+    borderRadius: 18,
+    zIndex: 0,
+  },
+  gradientBackground: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  hoveredBackground: {
+    borderColor: 'rgba(0, 191, 255, 0.3)',
+  },
   buttonContent: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
   },
   icon: {
-    marginRight: 8,
+    marginBottom: 8,
   },
   typeText: {
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
+  },
+  checkmarkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 191, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
