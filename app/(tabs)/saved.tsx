@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated, TextInput } from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image as RNImage, Animated, TextInput, NativeScrollEvent, NativeSyntheticEvent, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import {
@@ -17,9 +17,9 @@ import {
   List,
   LayoutGrid,
   MessageSquare,
+  Plus,
 } from "lucide-react-native";
 import * as Haptics from 'expo-haptics';
-import { Platform } from "react-native";
 
 import { useColors } from "@/constants/colors";
 import { useSavedTripsStore } from "@/store/savedTripsStore";
@@ -28,6 +28,7 @@ import EmptyState from "@/components/EmptyState";
 import CompactTripCard from "@/components/CompactTripCard";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
+import TripBlockCard from "@/components/TripBlockCard";
 
 interface SavedTripCardProps {
   item: Adventure;
@@ -353,29 +354,90 @@ export default function SavedScreen() {
   const Colors = useColors();
   const componentStyles = styles(Colors);
   const router = useRouter();
-  const { removeTrip, addTrip, getSortedSavedTrips } = useSavedTripsStore();
-  const sortedTrips = getSortedSavedTrips(); 
+  const { 
+    removeTrip, 
+    addTrip, 
+    getSortedSavedTrips,
+    tripBlocks,
+    createTripBlock,
+    updateTripBlock,
+    deleteTripBlock,
+    addAdventureToTripBlock,
+    removeAdventureFromTripBlock,
+    updateTripBlockNotes,
+  } = useSavedTripsStore();
+  
+  const sortedTrips = getSortedSavedTrips();
   const [lastRemovedTrip, setLastRemovedTrip] = React.useState<Adventure | null>(null);
   const [isCompactMode, setIsCompactMode] = React.useState(false);
+  const [isCreatingTripBlock, setIsCreatingTripBlock] = React.useState(false);
+  const [newTripBlockName, setNewTripBlockName] = React.useState('');
+  const [editingTripBlockId, setEditingTripBlockId] = React.useState<string | null>(null);
 
-  const headerOpacity = React.useRef(new Animated.Value(0)).current;
-  const headerTranslateY = React.useRef(new Animated.Value(-40)).current;
-  const emojiFloatY = React.useRef(new Animated.Value(0)).current;
+  // Collapsing header logic
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+  const HEADER_TOTAL_HEIGHT = 250; // Combined height of info card + actions row
+  const COLLAPSE_DISTANCE = 60;
 
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(headerTranslateY, { toValue: 0, friction: 7, tension: 40, useNativeDriver: true }),
-    ]).start();
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, COLLAPSE_DISTANCE],
+    outputRange: [0, -HEADER_TOTAL_HEIGHT - 40],
+    extrapolate: 'clamp',
+  });
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, COLLAPSE_DISTANCE / 2, COLLAPSE_DISTANCE],
+    outputRange: [1, 0.5, 0],
+    extrapolate: 'clamp',
+  });
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(emojiFloatY, { toValue: -6, duration: 1200, useNativeDriver: true, delay: 500 }),
-        Animated.timing(emojiFloatY, { toValue: 6, duration: 1200, useNativeDriver: true }),
-        Animated.timing(emojiFloatY, { toValue: 0, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
+  // Animate paddingTop for content container
+  const contentPaddingTop = scrollY.interpolate({
+    inputRange: [0, COLLAPSE_DISTANCE],
+    outputRange: [HEADER_TOTAL_HEIGHT, 0],
+    extrapolate: 'clamp',
+  });
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: true }
+  );
+
+  const handleCreateTripBlock = () => {
+    if (newTripBlockName.trim()) {
+      createTripBlock({
+        name: newTripBlockName.trim(),
+        adventures: [],
+      });
+      setNewTripBlockName('');
+      setIsCreatingTripBlock(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Trip block created!',
+        visibilityTime: 2000,
+      });
+    }
+  };
+
+  const handleEditTripBlock = (id: string) => {
+    setEditingTripBlockId(id);
+  };
+
+  const handleDeleteTripBlock = (id: string) => {
+    deleteTripBlock(id);
+    Toast.show({
+      type: 'success',
+      text1: 'Trip block deleted',
+      visibilityTime: 2000,
+    });
+  };
+
+  const handleAddAdventure = (tripBlockId: string) => {
+    // Navigate to a screen where user can select adventures to add
+    router.push({
+      pathname: '/add-to-trip',
+      params: { tripBlockId },
+    });
+  };
 
   const getCategoryTagColor = (type: string): string => {
     const typeLower = type?.toLowerCase();
@@ -484,10 +546,10 @@ export default function SavedScreen() {
   const displayData = groupAdventuresByDate(sortedTrips);
       
   const handleTripPress = (id: string) => {
-    router.push(`/trip/${id}`);
+    router.push(`/adventure/${id}`);
   };
 
-  if (sortedTrips.length === 0) {
+  if (sortedTrips.length === 0 && tripBlocks.length === 0) {
     return (
       <EmptyState
         title="No saved adventures"
@@ -504,90 +566,146 @@ export default function SavedScreen() {
 
   return (
     <View style={[componentStyles.container, { backgroundColor: Colors.background }]}>
-      <View style={componentStyles.headerContainer}>
-        <View style={componentStyles.ambientShape1} />
-        <View style={componentStyles.ambientShape2} />
-        <View style={componentStyles.ambientShape3} />
-        <Animated.View 
-          style={[
-            componentStyles.titleBadge, 
-            { 
-              opacity: headerOpacity, 
-              transform: [{ translateY: headerTranslateY }] 
-            }
-          ]}
-        >
+      {/* Collapsing header: info card + actions row */}
+      <Animated.View
+        style={[
+          componentStyles.collapsingHeader,
+          {
+            transform: [{ translateY: headerTranslateY }],
+            opacity: headerOpacity,
+          },
+        ]}
+      >
+        <View style={componentStyles.infoCard}>
           <LinearGradient
-            colors={[Colors.primary, Colors.secondary]} 
-            style={componentStyles.gradientWrapper}
+            colors={[Colors.primary, Colors.secondary]}
+            style={componentStyles.infoCardGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Animated.View style={{ transform: [{ translateY: emojiFloatY }] }}>
-              <Text style={componentStyles.headerIcon}>🧳</Text>
-            </Animated.View>
-            <Text style={componentStyles.headerTitle}>Your Adventures</Text>
-            <Text style={componentStyles.headerSubtitle}>
-              Trips you’ve bookmarked for inspiration or action.
-            </Text>
+            <Text style={componentStyles.infoCardIcon}>🧳</Text>
+            <Text style={componentStyles.infoCardTitle}>Your Adventures</Text>
+            <Text style={componentStyles.infoCardSubtitle}>Organize your saved adventures into trips</Text>
           </LinearGradient>
-        </Animated.View>
+        </View>
+        <View style={componentStyles.actionsRow}>
+          <TouchableOpacity
+            style={componentStyles.toggleButton}
+            onPress={() => setIsCompactMode(prev => !prev)}
+            accessibilityLabel={isCompactMode ? "Switch to normal view" : "Switch to compact view"}
+          >
+            {isCompactMode ? (
+              <LayoutGrid size={24} color={Colors.text} />
+            ) : (
+              <List size={24} color={Colors.text} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[componentStyles.createButton, { backgroundColor: Colors.primary }]}
+            onPress={() => setIsCreatingTripBlock(true)}
+          >
+            <Plus size={20} color="#fff" />
+            <Text style={componentStyles.createButtonText}>New Trip</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
-        <TouchableOpacity
-          style={componentStyles.toggleButton}
-          onPress={() => setIsCompactMode(prev => !prev)}
-          accessibilityLabel={isCompactMode ? "Switch to normal view" : "Switch to compact view"}
-        >
-          {isCompactMode ? (
-            <LayoutGrid size={24} color={Colors.text} />
-          ) : (
-            <List size={24} color={Colors.text} />
+      <Animated.View style={[componentStyles.contentContainer, { paddingTop: contentPaddingTop }]}>
+        {isCreatingTripBlock && (
+          <View style={[componentStyles.createTripBlockContainer, { 
+            backgroundColor: Colors.cardBackground,
+            position: 'relative',
+            zIndex: 2,
+            marginTop: 16,
+          }]}
+          >
+            <TextInput
+              style={[componentStyles.createTripBlockInput, { color: Colors.text }]}
+              placeholder="Enter trip name..."
+              placeholderTextColor={Colors.textSecondary}
+              value={newTripBlockName}
+              onChangeText={setNewTripBlockName}
+              autoFocus
+            />
+            <View style={componentStyles.createTripBlockActions}>
+              <TouchableOpacity
+                style={[componentStyles.createTripBlockButton, { backgroundColor: Colors.iconBackground }]}
+                onPress={() => {
+                  setIsCreatingTripBlock(false);
+                  setNewTripBlockName('');
+                }}
+              >
+                <Text style={[componentStyles.createTripBlockButtonText, { color: Colors.textSecondary }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[componentStyles.createTripBlockButton, { backgroundColor: Colors.primary }]}
+                onPress={handleCreateTripBlock}
+              >
+                <Text style={[componentStyles.createTripBlockButtonText, { color: '#fff' }]}>
+                  Create
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        <FlatList
+          data={tripBlocks}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={componentStyles.listContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          renderItem={({ item }) => (
+            <TripBlockCard
+              tripBlock={item}
+              Colors={Colors}
+              onPressTrip={handleTripPress}
+              onRemoveTrip={handleRemove}
+              onEditTripBlock={handleEditTripBlock}
+              onDeleteTripBlock={handleDeleteTripBlock}
+              onAddAdventure={handleAddAdventure}
+              onUpdateNotes={updateTripBlockNotes}
+              getTripTypeIcon={getTripTypeIcon}
+              formatUTCDate={formatUTCDate}
+              isCompactMode={isCompactMode}
+            />
           )}
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={displayData}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={componentStyles.listContent}
-        renderItem={({ item }) => {
-          const adventureItem = item as Adventure;
-          const headerItem = item as { type: 'header'; title: string };
-
-          if (headerItem.type === 'header') {
-            return (
-              <View style={componentStyles.dateHeaderContainer}>
-                <Text style={componentStyles.dateHeaderText}>{headerItem.title}</Text>
-              </View>
-            );
-          }
-          if (isCompactMode) {
-            return (
-              <CompactTripCard
-                item={adventureItem}
-                Colors={Colors}
-                onPressTrip={handleTripPress}
-                onRemoveTrip={handleRemove}
-                getTripTypeIcon={getTripTypeIcon}
-                variant="saved"
-              />
-            );
-          } else {
-            return (
-              <SavedTripCard
-                item={adventureItem}
-                componentStyles={componentStyles}
-                Colors={Colors}
-                onPressTrip={handleTripPress}
-                onRemoveTrip={handleRemove}
-                getTripTypeIcon={getTripTypeIcon}
-                formatUTCDate={formatUTCDate}
-                getCategoryTagColor={getCategoryTagColor}
-              />
-            );
-          }
-        }}
-      />
+          ListFooterComponent={sortedTrips.length > 0 ? (
+            <View style={componentStyles.unsortedSection}>
+              <Text style={[componentStyles.unsortedSectionTitle, { color: Colors.text }]}>
+                Unsorted Adventures
+              </Text>
+              {sortedTrips.map((trip) => (
+                isCompactMode ? (
+                  <CompactTripCard
+                    key={trip.id}
+                    item={trip}
+                    Colors={Colors}
+                    onPressTrip={handleTripPress}
+                    onRemoveTrip={handleRemove}
+                    getTripTypeIcon={getTripTypeIcon}
+                    variant="saved"
+                  />
+                ) : (
+                  <SavedTripCard
+                    key={trip.id}
+                    item={trip}
+                    componentStyles={componentStyles}
+                    Colors={Colors}
+                    onPressTrip={handleTripPress}
+                    onRemoveTrip={handleRemove}
+                    getTripTypeIcon={getTripTypeIcon}
+                    formatUTCDate={formatUTCDate}
+                    getCategoryTagColor={getCategoryTagColor}
+                  />
+                )
+              ))}
+            </View>
+          ) : null}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -610,42 +728,45 @@ const styles = (Colors: any) => StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    paddingVertical: 24, 
+    paddingVertical: 8,
     alignItems: 'center',
-    position: 'relative', 
-    overflow: 'hidden', 
-    marginBottom: 10, 
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: Colors.background,
+  },
+  contentContainer: {
+    flex: 1,
   },
   titleBadge: {
-    borderRadius: 20,
+    borderRadius: 14,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
-    width: '90%', 
-    maxWidth: 360, 
+    width: '90%',
+    maxWidth: 360,
     backgroundColor: 'transparent',
   },
   gradientWrapper: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 14,
+    padding: 12,
     alignItems: 'center',
   },
   headerIcon: { 
-    fontSize: 36,
-    marginBottom: 10,
+    fontSize: 24,
+    marginBottom: 2,
     color: '#fff',
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     maxWidth: '90%',
@@ -684,8 +805,8 @@ const styles = (Colors: any) => StyleSheet.create({
     zIndex: -1,
   },
   listContent: {
-    paddingHorizontal: 16, 
-    paddingBottom: 16, 
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   cardWrapperForBorder: { 
     borderRadius: 18, 
@@ -850,5 +971,129 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   cancelNoteButtonText: {
     color: Colors.textSecondary,
-  }
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginLeft: 12,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  createTripBlockContainer: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  createTripBlockInput: {
+    fontSize: 16,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.inputBackground,
+    marginBottom: 16,
+  },
+  createTripBlockActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  createTripBlockButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  createTripBlockButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  unsortedSection: {
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  unsortedSectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    zIndex: 2,
+    backgroundColor: Colors.background,
+  },
+  infoCard: {
+    alignItems: 'center',
+    marginHorizontal: 'auto',
+    marginTop: 0,
+    marginBottom: 8,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  infoCardGradient: {
+    width: '100%',
+    padding: 12,
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  infoCardIcon: {
+    fontSize: 22,
+    marginBottom: 4,
+    color: '#fff',
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  infoCardSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.92)',
+    textAlign: 'center',
+    maxWidth: '90%',
+  },
+  collapsingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    backgroundColor: Colors.background,
+    paddingTop: Platform.OS === 'web' ? 24 : 12,
+    paddingBottom: 0,
+    alignItems: 'center',
+  },
 });

@@ -1,14 +1,24 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Adventure } from '@/types/adventure';
+import type { Adventure, TripBlock } from '@/types/adventure';
 
 interface SavedTripsState {
   savedTrips: Adventure[];
+  tripBlocks: TripBlock[];
   addTrip: (trip: Adventure) => void;
   removeTrip: (id: string) => void;
   updateTripNotes: (id: string, notes: string) => void;
   getSortedSavedTrips: () => Adventure[];
+  // Trip Block functions
+  createTripBlock: (tripBlock: Omit<TripBlock, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTripBlock: (id: string, updates: Partial<TripBlock>) => void;
+  deleteTripBlock: (id: string) => void;
+  addAdventureToTripBlock: (tripBlockId: string, adventure: Adventure) => void;
+  removeAdventureFromTripBlock: (tripBlockId: string, adventureId: string) => void;
+  getTripBlockById: (id: string) => TripBlock | undefined;
+  getAdventuresByTripBlock: (tripBlockId: string) => Adventure[];
+  updateTripBlockNotes: (id: string, notes: string) => void;
 }
 
 const timeOfDaySortPriority: Record<string, number> = {
@@ -21,6 +31,7 @@ export const useSavedTripsStore = create<SavedTripsState>()(
   persist(
     (set, get) => ({
       savedTrips: [],
+      tripBlocks: [],
       addTrip: (trip) => {
         const current = get().savedTrips;
         set({ savedTrips: [...current, trip] });
@@ -58,6 +69,83 @@ export const useSavedTripsStore = create<SavedTripsState>()(
 
           return 0;
         });
+      },
+      // Trip Block functions
+      createTripBlock: (tripBlock) => {
+        const newTripBlock: TripBlock = {
+          ...tripBlock,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          adventures: [],
+        };
+        set((state) => ({
+          tripBlocks: [...state.tripBlocks, newTripBlock],
+        }));
+      },
+      updateTripBlock: (id, updates) => {
+        set((state) => ({
+          tripBlocks: state.tripBlocks.map((block) =>
+            block.id === id
+              ? { ...block, ...updates, updatedAt: new Date().toISOString() }
+              : block
+          ),
+        }));
+      },
+      deleteTripBlock: (id) => {
+        set((state) => ({
+          tripBlocks: state.tripBlocks.filter((block) => block.id !== id),
+          savedTrips: state.savedTrips.map((trip) =>
+            trip.tripBlockId === id ? { ...trip, tripBlockId: null } : trip
+          ),
+        }));
+      },
+      addAdventureToTripBlock: (tripBlockId, adventure) => {
+        set((state) => ({
+          savedTrips: state.savedTrips.map((trip) =>
+            trip.id === adventure.id ? { ...trip, tripBlockId } : trip
+          ),
+          tripBlocks: state.tripBlocks.map((block) =>
+            block.id === tripBlockId
+              ? {
+                  ...block,
+                  adventures: [...block.adventures, adventure],
+                  updatedAt: new Date().toISOString(),
+                }
+              : block
+          ),
+        }));
+      },
+      removeAdventureFromTripBlock: (tripBlockId, adventureId) => {
+        set((state) => ({
+          savedTrips: state.savedTrips.map((trip) =>
+            trip.id === adventureId ? { ...trip, tripBlockId: null } : trip
+          ),
+          tripBlocks: state.tripBlocks.map((block) =>
+            block.id === tripBlockId
+              ? {
+                  ...block,
+                  adventures: block.adventures.filter((a) => a.id !== adventureId),
+                  updatedAt: new Date().toISOString(),
+                }
+              : block
+          ),
+        }));
+      },
+      getTripBlockById: (id) => {
+        return get().tripBlocks.find((block) => block.id === id);
+      },
+      getAdventuresByTripBlock: (tripBlockId) => {
+        return get().savedTrips.filter((trip) => trip.tripBlockId === tripBlockId);
+      },
+      updateTripBlockNotes: (id, notes) => {
+        set((state) => ({
+          tripBlocks: state.tripBlocks.map((block) =>
+            block.id === id
+              ? { ...block, notes, updatedAt: new Date().toISOString() }
+              : block
+          ),
+        }));
       },
     }),
     {

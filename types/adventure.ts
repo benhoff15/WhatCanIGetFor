@@ -16,4 +16,18 @@ export interface Adventure {
   timeOfDay?: string | null;
   groupSize?: string | null; 
   notes?: string;
+  tripBlockId?: string | null; // Reference to the trip block this adventure belongs to
+}
+
+export interface TripBlock {
+  id: string;
+  name: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  adventures: Adventure[];
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
 }
