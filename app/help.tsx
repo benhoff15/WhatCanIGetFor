@@ -335,17 +335,38 @@ export default function HelpScreen() {
       <View style={[styles.faqContainer, { backgroundColor: Colors.cardBackground }]}>
         <AccordionItem title="What is WhatCanIGetFor?">
           <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
-            WhatCanIGetFor is an app designed to help you discover new activities, restaurants, and experiences based on your budget and location.
+            WhatCanIGetFor is a personalized discovery platform that helps you find memorable experiences—like activities, restaurants, and tours—based on your budget, location, and preferences. Whether you're planning a day out or exploring a new city, we show you exactly what's possible within your price range.
           </Text>
         </AccordionItem>
-        <AccordionItem title="How is my data used?">
+        <AccordionItem title="How does WhatCanIGetFor determine which experiences to recommend?">
           <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
-            We use your data to personalize recommendations and improve our services. For more details, please see our Privacy Policy. Your data is not shared with third parties for marketing purposes.
+            We aggregate and filter experiences from a variety of trusted sources and platforms. Our algorithm takes into account your selected budget, location, time of day, group size, and preferences to match you with curated, high-quality options that fit your vibe.
           </Text>
         </AccordionItem>
-        <AccordionItem title="Is there a premium version?">
+        <AccordionItem title="How is my data collected and used?">
           <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
-            Currently, all features are available for free. We may introduce premium features in the future, but core functionality will remain accessible to all users.
+            We collect only the information necessary to improve your user experience—such as location preferences, saved adventures, and selected filters. This data helps us tailor recommendations and streamline trip planning.
+            Your data is never sold to third parties for marketing purposes, and we adhere to strict data privacy practices as outlined in our Privacy Policy.
+          </Text>
+        </AccordionItem>
+        <AccordionItem title="Do I need to create an account to use the app?">
+          <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
+            You can browse and explore without creating an account. However, signing up enables you to save adventures, build itineraries, sync preferences across devices, and receive personalized suggestions.
+          </Text>
+        </AccordionItem>
+        <AccordionItem title="Is there a premium version of WhatCanIGetFor?">
+          <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
+            All features are currently available for free. In the future, we may introduce optional premium tools—such as collaborative trip planning or advanced itinerary exports—but the core discovery and planning features will always remain accessible to all users at no cost.
+          </Text>
+        </AccordionItem>
+        <AccordionItem title="Can I share my saved adventures or itineraries with others?">
+          <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
+            Yes. You can generate a shareable link for any saved trip or individual experience, making it easy to coordinate plans with friends, family, or travel companions.
+          </Text>
+        </AccordionItem>
+        <AccordionItem title="Is WhatCanIGetFor available in all cities?">
+          <Text style={[styles.accordionContentText, { color: Colors.textSecondary }]}>
+            We currently support major U.S. cities with expanding coverage globally. If your city isn't available yet, you can still search manually or request coverage through our support page.
           </Text>
         </AccordionItem>
       </View>

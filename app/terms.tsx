@@ -20,48 +20,83 @@ export default function TermsOfServiceScreen() {
     <ScrollView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={[styles.card, { backgroundColor: Colors.cardBackground }]}>
         <Text style={[styles.title, { color: Colors.text }]}>Terms of Service</Text>
+        <Text style={[styles.text, { color: Colors.textSecondary }]}>
+          Effective Date: May 31, 2025
+        </Text>
 
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          These Terms of Service govern your use of the WhatCanIGetFor app and its associated services.
+          These Terms of Service ("Terms") govern your access to and use of the WhatCanIGetFor mobile application and related services (collectively, the "Service"). By using the Service, you agree to be bound by these Terms. If you do not agree, please refrain from using the app.
         </Text>
 
         <Text style={[styles.heading, { color: Colors.text }]}>1. Acceptance of Terms</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          By using our app, you agree to be bound by these terms. If you do not agree, please do not use the service.
+          By accessing or using WhatCanIGetFor, you agree to comply with these Terms and all applicable laws and regulations. If you are using the Service on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.
         </Text>
 
         <Text style={[styles.heading, { color: Colors.text }]}>2. Use of the Service</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          You may use WhatCanIGetFor only for lawful purposes. You agree not to misuse the service or interfere with its functionality.
+          You agree to use the Service only for lawful and intended purposes. You must not:{"\n\n"}
+          • Interfere with the functionality or security of the app;{"\n\n"}
+          • Attempt to gain unauthorized access to user data or platform systems;{"\n\n"}
+          • Scrape, copy, or republish app content without written consent.{"\n\n"}
+          The app is intended for personal, non-commercial use unless expressly authorized.
         </Text>
 
         <Text style={[styles.heading, { color: Colors.text }]}>3. User Accounts</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          You are responsible for maintaining the confidentiality of your login credentials. You must notify us immediately of any unauthorized use.
+          To access certain features, you may be required to create an account. You are responsible for:{"\n\n"}
+          • Maintaining the confidentiality of your login credentials;{"\n\n"}
+          • Notifying us immediately of any unauthorized use or suspected breach.{"\n\n"}
+          We are not liable for any loss or damage arising from your failure to comply with these responsibilities.
         </Text>
 
-        <Text style={[styles.heading, { color: Colors.text }]}>4. Intellectual Property</Text>
+        <Text style={[styles.heading, { color: Colors.text }]}>4. Content Ownership and Intellectual Property</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          All content, design, and trademarks are the property of WhatCanIGetFor or its licensors. You may not copy, distribute, or modify content without permission.
+          All content, branding, layout, graphics, code, and design elements are the property of WhatCanIGetFor or its licensors and are protected by copyright, trademark, and other applicable laws.{"\n\n"}
+          You may not copy, modify, distribute, or create derivative works without prior written permission.
         </Text>
 
-        <Text style={[styles.heading, { color: Colors.text }]}>5. Termination</Text>
+        <Text style={[styles.heading, { color: Colors.text }]}>5. Adventure Listings and Third-Party Content</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          We may suspend or terminate your access to the service at any time if you violate these terms or misuse the platform.
+          Some adventure listings or recommendations may link to third-party services (e.g., ticket booking or review platforms). We do not control or endorse these third-party services and are not responsible for their content, pricing, availability, or terms.{"\n\n"}
+          You use third-party services at your own risk and are subject to their terms and privacy policies.
         </Text>
 
-        <Text style={[styles.heading, { color: Colors.text }]}>6. Disclaimer</Text>
+        <Text style={[styles.heading, { color: Colors.text }]}>6. Termination</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          The service is provided "as is" without warranties of any kind. We do not guarantee that adventures or experiences shown will be available or accurate.
+          We reserve the right to suspend or terminate your account or access to the Service at any time, without prior notice, if:{"\n\n"}
+          • You violate these Terms;{"\n\n"}
+          • You engage in behavior that may harm the platform or its users;{"\n\n"}
+          • We discontinue or materially alter the Service.{"\n\n"}
+          You may also terminate your use at any time by deleting your account or the app.
         </Text>
 
-        <Text style={[styles.heading, { color: Colors.text }]}>7. Changes to Terms</Text>
+        <Text style={[styles.heading, { color: Colors.text }]}>7. Disclaimers</Text>
         <Text style={[styles.text, { color: Colors.textSecondary }]}>
-          We may revise these Terms of Service at any time. Continued use after updates means you accept the new terms.
+          The Service is provided "as is" without warranties of any kind.{"\n\n"}
+          We do not guarantee:{"\n\n"}
+          • That experiences, prices, or listings will always be accurate, up to date, or available;{"\n\n"}
+          • That the app will be error-free, secure, or continuously operational.{"\n\n"}
+          Use of the app is at your sole risk.
         </Text>
 
-        <Text style={[styles.text, { color: Colors.textSecondary, marginTop: 16 }]}>
-          Effective Date: May 31, 2025
+        <Text style={[styles.heading, { color: Colors.text }]}>8. Limitation of Liability</Text>
+        <Text style={[styles.text, { color: Colors.textSecondary }]}>
+          To the maximum extent permitted by law, WhatCanIGetFor is not liable for:{"\n\n"}
+          • Indirect, incidental, special, or consequential damages;{"\n\n"}
+          • Any loss of data, revenue, or opportunity;{"\n\n"}
+          • Third-party service interruptions or errors.
+        </Text>
+
+        <Text style={[styles.heading, { color: Colors.text }]}>9. Changes to the Terms</Text>
+        <Text style={[styles.text, { color: Colors.textSecondary }]}>
+          We may update these Terms periodically. Continued use of the app after any revisions constitutes acceptance of the updated terms. We will notify users of material changes via in-app notifications or email.
+        </Text>
+
+        <Text style={[styles.heading, { color: Colors.text }]}>10. Contact</Text>
+        <Text style={[styles.text, { color: Colors.textSecondary }]}>
+          If you have questions or concerns about these Terms, contact us at:{"\n\n"}
+          📧 support@whatcanigetfor.com
         </Text>
       </View>
     </ScrollView>
